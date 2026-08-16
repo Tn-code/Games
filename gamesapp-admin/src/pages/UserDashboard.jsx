@@ -20,10 +20,14 @@ export function UserDashboard() {
   const [viewingStory, setViewingStory] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
+  const [isListening, setIsListening] = useState(false);
 
-  // Real-time listener for current user
+  // Real-time listener for current user - runs once
   useEffect(() => {
-    if (!user) return;
+    if (!user || isListening) return;
+
+    console.log('🔄 Setting up real-time listener for user:', user.uid);
+    setIsListening(true);
 
     const userRef = doc(db, 'users', user.uid);
     const unsubscribe = onSnapshot(userRef, (doc) => {
@@ -33,27 +37,32 @@ export function UserDashboard() {
         const count = (data.unlockedContent || []).length;
         setUnlockedCount(count);
         console.log('🔄 User data updated! Unlocked content:', count);
+        
+        // Show a notification if new content was unlocked
+        if (count > 0) {
+          console.log('✅ User has unlocked content!');
+        }
       }
+    }, (error) => {
+      console.error('❌ Error listening to user updates:', error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log('🛑 Stopping real-time listener');
+      unsubscribe();
+      setIsListening(false);
+    };
   }, [user]);
 
-  // Refresh data periodically
+  // Initial data fetch - runs once
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (user) {
       fetchUsers();
       fetchStories();
       fetchVideos();
       fetchQuizzes();
-    }, 5000); // Check every 5 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  if (storiesLoading || videosLoading || quizzesLoading || usersLoading) {
-    return <LoadingSpinner />;
-  }
+    }
+  }, [user]);
 
   // Get user from users list (fallback)
   const userFromList = users.find(u => u.uid === user?.uid);
@@ -74,19 +83,11 @@ export function UserDashboard() {
   const handleModalClose = () => {
     setShowPremiumModal(false);
     setSelectedItem(null);
-    // Force refresh data
+    // Refresh data once after modal closes
     fetchUsers();
-    fetchStories();
-    fetchVideos();
-    fetchQuizzes();
-    // Also trigger a re-check
-    setTimeout(() => {
-      fetchUsers();
-    }, 1000);
   };
 
   const handleViewContent = (item, type) => {
-    // Check if user has access
     const hasAccess_ = hasAccess(item.id, type);
     
     if (item.type === 'premium' && !hasAccess_) {
@@ -98,6 +99,10 @@ export function UserDashboard() {
       setViewingStory(item);
     }
   };
+
+  if (storiesLoading || videosLoading || quizzesLoading || usersLoading) {
+    return <LoadingSpinner />;
+  }
 
   const renderContent = (items, type, icon, color) => {
     if (items.length === 0) {
@@ -171,7 +176,6 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Navigation */}
       <nav className="bg-white shadow-md border-b-4 border-purple-400 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -212,7 +216,6 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-2 mb-6 flex-wrap">
           <button
@@ -266,7 +269,6 @@ export function UserDashboard() {
           </button>
         </div>
 
-        {/* Content */}
         <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
           {activeTab === 'stories' && renderContent(stories, 'story', 'fa-book', 'bg-blue-100')}
           {activeTab === 'videos' && renderContent(videos, 'video', 'fa-video', 'bg-red-100')}
@@ -308,7 +310,6 @@ export function UserDashboard() {
         </div>
       </div>
 
-      {/* Premium Request Modal */}
       {showPremiumModal && (
         <PremiumRequest
           item={selectedItem}
@@ -317,7 +318,6 @@ export function UserDashboard() {
         />
       )}
 
-      {/* Story Viewer Modal */}
       {viewingStory && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">

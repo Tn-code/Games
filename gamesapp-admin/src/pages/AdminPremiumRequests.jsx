@@ -3,13 +3,12 @@ import { useFirestore } from '../hooks/useFirestore';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { db } from '../firebase/config';
-import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 
 export function AdminPremiumRequests() {
   const { user: currentUser } = useAuth();
   const { data: requests, loading, updateItem, deleteItem, fetchData } = useFirestore('premiumRequests');
   const { data: users, loading: usersLoading, updateItem: updateUser, fetchData: fetchUsers } = useFirestore('users');
-  const [selectedRequest, setSelectedRequest] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [filter, setFilter] = useState('pending');
   const [processing, setProcessing] = useState(false);
@@ -30,9 +29,8 @@ export function AdminPremiumRequests() {
 
     try {
       console.log('📝 Approving request for:', request.itemName);
-      console.log('User ID:', request.userId);
       
-      // 1. Update request status in Firestore directly
+      // 1. Update request status
       const requestRef = doc(db, 'premiumRequests', request.id);
       await updateDoc(requestRef, {
         status: 'approved',
@@ -56,7 +54,7 @@ export function AdminPremiumRequests() {
         );
         
         if (!alreadyUnlocked) {
-          // 5. Create new content object
+          // 5. Add new content
           const newContent = {
             id: request.itemId,
             name: request.itemName,
@@ -66,7 +64,7 @@ export function AdminPremiumRequests() {
             paid: true
           };
           
-          // 6. Update user's unlocked content in Firestore directly
+          // 6. Update user's unlocked content
           const userRef = doc(db, 'users', user.id);
           await updateDoc(userRef, {
             unlockedContent: [...unlocked, newContent]
@@ -83,14 +81,9 @@ export function AdminPremiumRequests() {
         setMessage({ type: 'error', text: `❌ User not found for this request` });
       }
 
-      // 7. Refresh data
+      // 7. Refresh data once
       await fetchData();
       await fetchUsers();
-      
-      // 8. Update local state to reflect changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
       
     } catch (error) {
       console.error('❌ Error approving request:', error);
@@ -105,9 +98,6 @@ export function AdminPremiumRequests() {
     setMessage({ type: '', text: '' });
 
     try {
-      console.log('📝 Rejecting request for:', request.itemName);
-      
-      // 1. Update request status in Firestore directly
       const requestRef = doc(db, 'premiumRequests', request.id);
       await updateDoc(requestRef, {
         status: 'rejected',
@@ -116,15 +106,10 @@ export function AdminPremiumRequests() {
       });
       console.log('✅ Request updated to rejected');
 
-      // 2. Refresh data
       await fetchData();
       await fetchUsers();
 
       setMessage({ type: 'success', text: `❌ Request rejected for "${request.itemName}"` });
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
       
     } catch (error) {
       console.error('❌ Error rejecting request:', error);
