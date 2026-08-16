@@ -3,12 +3,12 @@ import { useFirestore } from '../hooks/useFirestore';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { db } from '../firebase/config';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 
 export function AdminPremiumRequests() {
   const { user: currentUser } = useAuth();
-  const { data: requests, loading, updateItem, deleteItem, fetchData } = useFirestore('premiumRequests');
-  const { data: users, loading: usersLoading, updateItem: updateUser, fetchData: fetchUsers } = useFirestore('users');
+  const { data: requests, loading, fetchData } = useFirestore('premiumRequests');
+  const { data: users, loading: usersLoading, fetchData: fetchUsers } = useFirestore('users');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [filter, setFilter] = useState('pending');
   const [processing, setProcessing] = useState(false);
@@ -29,6 +29,7 @@ export function AdminPremiumRequests() {
 
     try {
       console.log('📝 Approving request for:', request.itemName);
+      console.log('📝 User ID:', request.userId);
       
       // 1. Update request status
       const requestRef = doc(db, 'premiumRequests', request.id);
@@ -40,13 +41,19 @@ export function AdminPremiumRequests() {
       });
       console.log('✅ Request updated to approved');
 
-      // 2. Find the user
+      // 2. Find the user in Firestore
       const user = users.find(u => u.uid === request.userId);
+      
       if (user) {
-        console.log('✅ User found:', user.email);
+        console.log('✅ User found in Firestore:', user.email);
         
-        // 3. Get current unlocked content
-        const unlocked = user.unlockedContent || [];
+        // 3. Get the user's current unlocked content
+        const userRef = doc(db, 'users', user.id);
+        const userDoc = await getDoc(userRef);
+        const userData = userDoc.data();
+        const unlocked = userData?.unlockedContent || [];
+        
+        console.log('📊 Current unlocked content:', unlocked);
         
         // 4. Check if already unlocked
         const alreadyUnlocked = unlocked.some(item => 
@@ -64,24 +71,38 @@ export function AdminPremiumRequests() {
             paid: true
           };
           
-          // 6. Update user's unlocked content
-          const userRef = doc(db, 'users', user.id);
+          const updatedUnlocked = [...unlocked, newContent];
+          console.log('📝 Adding new content:', newContent);
+          console.log('📝 Updated unlocked content:', updatedUnlocked);
+          
+          // 6. Update user's unlocked content - DIRECT UPDATE
           await updateDoc(userRef, {
-            unlockedContent: [...unlocked, newContent]
+            unlockedContent: updatedUnlocked,
+            lastUpdated: new Date().toISOString()
           });
+          
           console.log('✅ Content added to user library:', request.itemName);
           
-          setMessage({ type: 'success', text: `✅ Premium access granted for "${request.itemName}" to ${user.email}` });
+          setMessage({ 
+            type: 'success', 
+            text: `✅ Premium access granted for "${request.itemName}" to ${user.email}` 
+          });
         } else {
           console.log('ℹ️ User already has this content');
-          setMessage({ type: 'info', text: `ℹ️ User already has access to "${request.itemName}"` });
+          setMessage({ 
+            type: 'info', 
+            text: `ℹ️ User already has access to "${request.itemName}"` 
+          });
         }
       } else {
         console.error('❌ User not found:', request.userId);
-        setMessage({ type: 'error', text: `❌ User not found for this request` });
+        setMessage({ 
+          type: 'error', 
+          text: `❌ User not found. Please sync users first.` 
+        });
       }
 
-      // 7. Refresh data once
+      // 7. Refresh data
       await fetchData();
       await fetchUsers();
       

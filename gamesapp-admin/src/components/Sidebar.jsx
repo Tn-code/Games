@@ -4,6 +4,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
     { id: 'premium-requests', icon: 'fa-gem', label: 'Premium Requests' },
+    { id: 'quick-fix', icon: 'fa-tools', label: 'Quick Fix' },
     { id: 'stories', icon: 'fa-book', label: 'Stories' },
     { id: 'create-story', icon: 'fa-plus-circle', label: 'Create Story' },
     { id: 'videos', icon: 'fa-video', label: 'Video Stories' },

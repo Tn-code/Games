@@ -14,6 +14,7 @@ import { UserManagement } from './UserManagement';
 import { SyncUsers } from './SyncUsers';
 import { UserContentManager } from './UserContentManager';
 import { AdminPremiumRequests } from './AdminPremiumRequests';
+import { QuickFix } from './QuickFix';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -32,6 +33,7 @@ export function Dashboard() {
   }
 
   const pendingRequests = requests.filter(r => r.status === 'pending').length;
+  const approvedRequests = requests.filter(r => r.status === 'approved').length;
 
   const stats = {
     games: games.length,
@@ -42,12 +44,14 @@ export function Dashboard() {
     totalQuestions: quizzes.reduce((acc, q) => acc + (q.totalQuestions || 0), 0),
     videos: videos.length,
     premiumVideos: videos.filter(v => v.type === 'premium').length,
-    pendingRequests: pendingRequests
+    pendingRequests: pendingRequests,
+    approvedRequests: approvedRequests
   };
 
   const renderContent = () => {
     switch(activeTab) {
       case 'premium-requests': return <AdminPremiumRequests />;
+      case 'quick-fix': return <QuickFix />;
       case 'create-story': return <CreateStory />;
       case 'stories': return <StoriesList />;
       case 'videos': return <VideoStoriesList />;
@@ -73,57 +77,30 @@ export function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard icon="gem" title="Pending Requests" value={stats.pendingRequests} color="purple" subtitle="Need approval" />
+            <StatsCard icon="gem" title="Pending" value={stats.pendingRequests} color="purple" subtitle="Need approval" />
+            <StatsCard icon="check-circle" title="Approved" value={stats.approvedRequests} color="green" subtitle="Already approved" />
             <StatsCard icon="book" title="Stories" value={stats.stories} color="blue" subtitle={`${stats.premiumStories} premium`} />
             <StatsCard icon="video" title="Videos" value={stats.videos} color="red" subtitle={`${stats.premiumVideos} premium`} />
-            <StatsCard icon="puzzle-piece" title="Quizzes" value={stats.quizzes} color="purple" subtitle={`${stats.totalQuestions} questions`} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                <i className="fas fa-rocket text-purple-600 mr-2"></i>
-                Quick Actions
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => setActiveTab('premium-requests')} className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl hover:shadow-lg transition-all text-center">
-                  <i className="fas fa-gem text-2xl text-purple-600 mb-2"></i>
-                  <p className="text-sm font-medium text-gray-700">Requests</p>
-                </button>
-                <button onClick={() => setActiveTab('create-story')} className="p-4 bg-blue-50 rounded-xl hover:shadow-lg transition-all text-center">
-                  <i className="fas fa-plus-circle text-2xl text-blue-600 mb-2"></i>
-                  <p className="text-sm font-medium text-gray-700">Add Story</p>
-                </button>
-                <button onClick={() => setActiveTab('create-video')} className="p-4 bg-red-50 rounded-xl hover:shadow-lg transition-all text-center">
-                  <i className="fas fa-video text-2xl text-red-600 mb-2"></i>
-                  <p className="text-sm font-medium text-gray-700">Add Video</p>
-                </button>
-                <button onClick={() => setActiveTab('create-quiz')} className="p-4 bg-purple-50 rounded-xl hover:shadow-lg transition-all text-center">
-                  <i className="fas fa-puzzle-piece text-2xl text-purple-600 mb-2"></i>
-                  <p className="text-sm font-medium text-gray-700">Add Quiz</p>
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                <i className="fas fa-users text-green-600 mr-2"></i>
-                User Management
-              </h3>
-              <div className="space-y-3">
-                <button onClick={() => setActiveTab('users')} className="w-full p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all text-left">
-                  <i className="fas fa-users text-blue-600 mr-2"></i>
-                  View All Users
-                </button>
-                <button onClick={() => setActiveTab('user-content')} className="w-full p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all text-left">
-                  <i className="fas fa-user-lock text-yellow-600 mr-2"></i>
-                  Manage User Content
-                </button>
-                <button onClick={() => setActiveTab('sync-users')} className="w-full p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all text-left">
-                  <i className="fas fa-sync text-purple-600 mr-2"></i>
-                  Sync Users
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              <i className="fas fa-rocket text-purple-600 mr-2"></i>
+              Quick Actions
+            </h3>
+            <div className="grid grid-cols-3 gap-3">
+              <button onClick={() => setActiveTab('premium-requests')} className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl hover:shadow-lg transition-all text-center">
+                <i className="fas fa-gem text-2xl text-purple-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Requests</p>
+              </button>
+              <button onClick={() => setActiveTab('create-story')} className="p-4 bg-blue-50 rounded-xl hover:shadow-lg transition-all text-center">
+                <i className="fas fa-plus-circle text-2xl text-blue-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Add Story</p>
+              </button>
+              <button onClick={() => setActiveTab('quick-fix')} className="p-4 bg-yellow-50 rounded-xl hover:shadow-lg transition-all text-center">
+                <i className="fas fa-tools text-2xl text-yellow-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Quick Fix</p>
+              </button>
             </div>
           </div>
         </div>
