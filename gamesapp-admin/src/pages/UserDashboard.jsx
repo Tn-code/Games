@@ -1,70 +1,146 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
-import { PaymentModal } from '../components/PaymentModal';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { QuizPlay } from './QuizPlay';
+import { PremiumRequest } from './PremiumRequest';
 
 export function UserDashboard() {
   const { user, logout } = useAuth();
   const { data: stories, loading: storiesLoading } = useFirestore('stories');
+  const { data: videos, loading: videosLoading } = useFirestore('videos');
   const { data: quizzes, loading: quizzesLoading } = useFirestore('quizzes');
+  const { data: users, loading: usersLoading } = useFirestore('users');
+  
   const [activeTab, setActiveTab] = useState('stories');
   const [selectedItem, setSelectedItem] = useState(null);
-  const [showPayment, setShowPayment] = useState(false);
-  const [playingQuiz, setPlayingQuiz] = useState(null);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [premiumType, setPremiumType] = useState('story');
   const [viewingStory, setViewingStory] = useState(null);
 
-  if (storiesLoading || quizzesLoading) return <LoadingSpinner />;
+  if (storiesLoading || videosLoading || quizzesLoading || usersLoading) {
+    return <LoadingSpinner />;
+  }
 
-  const handlePurchase = (item) => {
-    setSelectedItem({ ...item, price: item.type === 'premium' ? '€4.99' : '€0.00' });
-    setShowPayment(true);
+  // Get current user from Firestore
+  const currentUserData = users.find(u => u.uid === user?.uid);
+
+  // Check if user has access to content
+  const hasAccess = (itemId, type) => {
+    const unlocked = currentUserData?.unlockedContent || [];
+    return unlocked.some(item => item.id === itemId && item.type === type);
   };
 
-  const handlePaymentSuccess = () => { window.location.reload(); };
+  const handlePremiumRequest = (item, type) => {
+    setSelectedItem(item);
+    setPremiumType(type);
+    setShowPremiumModal(true);
+  };
 
-  const handlePlayQuiz = (quiz) => {
-    // Check if premium and not purchased
-    if (quiz.type === 'premium') {
-      // Here you would check if user purchased it
-      // For now, allow premium quizzes to be played
-      setPlayingQuiz(quiz);
-    } else {
-      setPlayingQuiz(quiz);
+  const handleViewContent = (item, type) => {
+    if (item.type === 'premium' && !hasAccess(item.id, type)) {
+      handlePremiumRequest(item, type);
+      return;
     }
+    
+    if (type === 'story') {
+      setViewingStory(item);
+    }
+    // For videos and quizzes - you can add view/play logic
   };
 
-  const handleViewStory = (story) => {
-    setViewingStory(story);
+  const renderContent = (items, type, icon, color) => {
+    if (items.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <i className={`fas ${icon} text-6xl text-gray-300 mb-4`}></i>
+          <p className="text-gray-500">No {type}s available yet</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.map((item) => {
+          const isLocked = item.type === 'premium' && !hasAccess(item.id, type);
+          
+          return (
+            <div key={item.id} className={`border rounded-2xl overflow-hidden hover:shadow-xl transition-all ${
+              isLocked ? 'opacity-75' : ''
+            }`}>
+              <div className="relative">
+                {item.imageUrl && (
+                  <img src={item.imageUrl} alt={item.name || item.title} className="w-full h-48 object-cover" />
+                )}
+                {!item.imageUrl && (
+                  <div className={`w-full h-48 ${color} flex items-center justify-center text-6xl`}>
+                    <i className={`fas ${icon}`}></i>
+                  </div>
+                )}
+                <div className="absolute top-3 right-3 flex gap-2">
+                  {item.type === 'premium' && (
+                    <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 rounded-full text-xs font-bold shadow-lg">
+                      ⭐ Premium
+                    </span>
+                  )}
+                  {isLocked && (
+                    <span className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-bold shadow-lg">
+                      🔒 Locked
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-bold text-lg text-gray-800">{item.name || item.title}</h3>
+                <p className="text-sm text-gray-500">{item.nameArabic || item.titleArabic}</p>
+                <button
+                  onClick={() => handleViewContent(item, type)}
+                  className={`mt-3 w-full py-2 rounded-xl font-medium transition-all ${
+                    isLocked
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {isLocked ? '⭐ Request Premium' : type === 'story' ? '📖 Read' : '▶️ Watch'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Navigation - Kid-friendly colorful */}
+      <nav className="bg-white shadow-md border-b-4 border-purple-400 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-                <i className="fas fa-gamepad text-lg"></i>
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg transform rotate-3">
+                🎮
               </div>
-              <h1 className="text-xl font-bold text-gray-800">GamesApp</h1>
+              <div>
+                <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+                  GamesApp
+                </h1>
+                <p className="text-xs text-gray-500">Fun for all ages!</p>
+              </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-full px-3 py-1">
                 {user?.photoURL ? (
                   <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full" />
                 ) : (
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-blue-400 rounded-full flex items-center justify-center text-white">
                     <i className="fas fa-user"></i>
                   </div>
                 )}
-                <span className="text-sm text-gray-600 hidden sm:block">
+                <span className="text-sm font-medium text-gray-700 hidden sm:block">
                   {user?.displayName || user?.email?.split('@')[0] || 'User'}
                 </span>
               </div>
-              <button onClick={logout} className="text-gray-500 hover:text-gray-700">
+              <button onClick={logout} className="text-gray-500 hover:text-gray-700 transition-all">
                 <i className="fas fa-sign-out-alt"></i>
               </button>
             </div>
@@ -72,119 +148,128 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {/* Tabs */}
+      {/* Tabs - Colorful */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex gap-4 mb-6 flex-wrap">
-          <button onClick={() => setActiveTab('stories')} className={`px-6 py-2 rounded-xl font-medium transition-all ${activeTab === 'stories' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-            <i className="fas fa-book mr-2"></i>Stories
+        <div className="flex gap-2 mb-6 flex-wrap">
+          <button
+            onClick={() => setActiveTab('stories')}
+            className={`px-6 py-3 rounded-2xl font-bold transition-all transform hover:scale-105 ${
+              activeTab === 'stories'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <span className="text-2xl mr-2">📚</span>
+            Stories
           </button>
-          <button onClick={() => setActiveTab('quizzes')} className={`px-6 py-2 rounded-xl font-medium transition-all ${activeTab === 'quizzes' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-            <i className="fas fa-puzzle-piece mr-2"></i>Quizzes
+          <button
+            onClick={() => setActiveTab('videos')}
+            className={`px-6 py-3 rounded-2xl font-bold transition-all transform hover:scale-105 ${
+              activeTab === 'videos'
+                ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-lg'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <span className="text-2xl mr-2">🎬</span>
+            Videos
           </button>
-          <button onClick={() => setActiveTab('library')} className={`px-6 py-2 rounded-xl font-medium transition-all ${activeTab === 'library' ? 'bg-green-600 text-white shadow-lg shadow-green-600/30' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-            <i className="fas fa-folder-open mr-2"></i>My Library
+          <button
+            onClick={() => setActiveTab('quizzes')}
+            className={`px-6 py-3 rounded-2xl font-bold transition-all transform hover:scale-105 ${
+              activeTab === 'quizzes'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <span className="text-2xl mr-2">🧩</span>
+            Quizzes
+          </button>
+          <button
+            onClick={() => setActiveTab('library')}
+            className={`px-6 py-3 rounded-2xl font-bold transition-all transform hover:scale-105 ${
+              activeTab === 'library'
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <span className="text-2xl mr-2">📂</span>
+            My Library
           </button>
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          {activeTab === 'stories' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">📚 Stories</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {stories.map((story) => (
-                  <div key={story.id} className="border rounded-xl overflow-hidden hover:shadow-lg transition-all">
-                    <div className="h-40 bg-gray-200 relative">
-                      <img src={story.imageUrl || 'https://via.placeholder.com/400x200/cccccc/666666?text=Story'} alt={story.name} className="w-full h-full object-cover" />
-                      <div className="absolute top-3 right-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${story.type === 'premium' ? 'bg-yellow-400 text-yellow-900' : 'bg-green-400 text-green-900'}`}>
-                          {story.type === 'premium' ? '⭐ Premium' : '📖 Free'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-bold text-gray-800">{story.name}</h3>
-                      <p className="text-sm text-gray-500">{story.nameArabic}</p>
-                      <button onClick={() => handleViewStory(story)} className="mt-3 w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-all font-medium">
-                        📖 Read Story
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'quizzes' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">🧩 Quizzes</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {quizzes.map((quiz) => (
-                  <div key={quiz.id} className="border rounded-xl overflow-hidden hover:shadow-lg transition-all">
-                    <div className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-bold text-gray-800">{quiz.title}</h3>
-                          <p className="text-sm text-gray-500">{quiz.titleArabic}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${quiz.difficulty === 'easy' ? 'bg-green-100 text-green-700' : quiz.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                          {quiz.difficulty}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">{quiz.description}</p>
-                      <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-                        <span><i className="fas fa-question-circle mr-1"></i> {quiz.totalQuestions || quiz.questions?.length || 0}</span>
-                        <span><i className="fas fa-clock mr-1"></i> {quiz.timeLimit || 5} min</span>
-                        <span><i className="fas fa-star mr-1"></i> {quiz.points || 10} pts</span>
-                      </div>
-                      <button onClick={() => handlePlayQuiz(quiz)} className="mt-3 w-full bg-purple-600 text-white py-2 rounded-xl hover:bg-purple-700 transition-all font-medium">
-                        🧠 Start Quiz
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
+        <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
+          {activeTab === 'stories' && renderContent(stories, 'story', 'fa-book', 'bg-blue-100')}
+          {activeTab === 'videos' && renderContent(videos, 'video', 'fa-video', 'bg-red-100')}
+          {activeTab === 'quizzes' && renderContent(quizzes, 'quiz', 'fa-puzzle-piece', 'bg-purple-100')}
           {activeTab === 'library' && (
-            <div className="text-center py-12">
-              <i className="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
-              <p className="text-gray-500">Your purchased content will appear here</p>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">📂 My Library</h2>
+              {currentUserData?.unlockedContent?.length === 0 ? (
+                <div className="text-center py-12">
+                  <i className="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
+                  <p className="text-gray-500">Your library is empty</p>
+                  <p className="text-sm text-gray-400 mt-2">Request premium content to build your library!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {currentUserData?.unlockedContent.map((item) => (
+                    <div key={item.id} className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-4 border-2 border-green-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center text-2xl">
+                          {item.type === 'story' && '📚'}
+                          {item.type === 'video' && '🎬'}
+                          {item.type === 'quiz' && '🧩'}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800">{item.name}</p>
+                          <p className="text-xs text-gray-500 capitalize">{item.type}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                        <span><i className="fas fa-check-circle text-green-500 mr-1"></i> Unlocked</span>
+                        <span>• {new Date(item.grantedAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Payment Modal */}
-      {showPayment && <PaymentModal isOpen={showPayment} onClose={() => setShowPayment(false)} item={selectedItem} onPaymentSuccess={handlePaymentSuccess} />}
-
-      {/* Quiz Play Modal */}
-      {playingQuiz && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4 overflow-y-auto">
-          <QuizPlay quiz={playingQuiz} onClose={() => setPlayingQuiz(null)} />
-        </div>
+      {/* Premium Request Modal */}
+      {showPremiumModal && (
+        <PremiumRequest
+          item={selectedItem}
+          type={premiumType}
+          onClose={() => {
+            setShowPremiumModal(false);
+            setSelectedItem(null);
+          }}
+        />
       )}
 
       {/* Story Viewer Modal */}
       {viewingStory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">{viewingStory.name}</h2>
                 <p className="text-gray-500">{viewingStory.nameArabic}</p>
               </div>
               <button onClick={() => setViewingStory(null)} className="text-gray-400 hover:text-gray-600">
-                <i className="fas fa-times text-xl"></i>
+                <i className="fas fa-times text-2xl"></i>
               </button>
             </div>
             {viewingStory.imageUrl && (
-              <img src={viewingStory.imageUrl} alt={viewingStory.name} className="w-full h-64 object-cover rounded-xl mb-4" />
+              <img src={viewingStory.imageUrl} alt={viewingStory.name} className="w-full h-64 object-cover rounded-2xl mb-4" />
             )}
             <div className="prose max-w-none">
-              <p className="text-gray-700 whitespace-pre-wrap">{viewingStory.content}</p>
-              <p className="text-gray-600 mt-4 whitespace-pre-wrap" dir="rtl">{viewingStory.contentArabic}</p>
+              <p className="text-gray-700 whitespace-pre-wrap text-lg">{viewingStory.content}</p>
+              <p className="text-gray-600 mt-4 whitespace-pre-wrap text-lg" dir="rtl">{viewingStory.contentArabic}</p>
             </div>
           </div>
         </div>
