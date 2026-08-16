@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -6,16 +6,29 @@ import { PremiumRequest } from './PremiumRequest';
 
 export function UserDashboard() {
   const { user, logout } = useAuth();
-  const { data: stories, loading: storiesLoading } = useFirestore('stories');
-  const { data: videos, loading: videosLoading } = useFirestore('videos');
-  const { data: quizzes, loading: quizzesLoading } = useFirestore('quizzes');
-  const { data: users, loading: usersLoading } = useFirestore('users');
+  const { data: stories, loading: storiesLoading, fetchData: fetchStories } = useFirestore('stories');
+  const { data: videos, loading: videosLoading, fetchData: fetchVideos } = useFirestore('videos');
+  const { data: quizzes, loading: quizzesLoading, fetchData: fetchQuizzes } = useFirestore('quizzes');
+  const { data: users, loading: usersLoading, fetchData: fetchUsers } = useFirestore('users');
   
   const [activeTab, setActiveTab] = useState('stories');
   const [selectedItem, setSelectedItem] = useState(null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [premiumType, setPremiumType] = useState('story');
   const [viewingStory, setViewingStory] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh data every 10 seconds to check for approvals
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUsers();
+      fetchStories();
+      fetchVideos();
+      fetchQuizzes();
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   if (storiesLoading || videosLoading || quizzesLoading || usersLoading) {
     return <LoadingSpinner />;
@@ -45,7 +58,6 @@ export function UserDashboard() {
     if (type === 'story') {
       setViewingStory(item);
     }
-    // For videos and quizzes - you can add view/play logic
   };
 
   const renderContent = (items, type, icon, color) => {
@@ -62,6 +74,7 @@ export function UserDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => {
           const isLocked = item.type === 'premium' && !hasAccess(item.id, type);
+          const isUnlocked = item.type === 'premium' && hasAccess(item.id, type);
           
           return (
             <div key={item.id} className={`border rounded-2xl overflow-hidden hover:shadow-xl transition-all ${
@@ -87,6 +100,11 @@ export function UserDashboard() {
                       🔒 Locked
                     </span>
                   )}
+                  {isUnlocked && (
+                    <span className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold shadow-lg">
+                      ✅ Unlocked
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="p-4">
@@ -97,10 +115,12 @@ export function UserDashboard() {
                   className={`mt-3 w-full py-2 rounded-xl font-medium transition-all ${
                     isLocked
                       ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg'
+                      : isUnlocked
+                      ? 'bg-green-600 text-white hover:bg-green-700'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
-                  {isLocked ? '⭐ Request Premium' : type === 'story' ? '📖 Read' : '▶️ Watch'}
+                  {isLocked ? '⭐ Request Premium' : isUnlocked ? '✅ Access Granted' : type === 'story' ? '📖 Read' : '▶️ Watch'}
                 </button>
               </div>
             </div>
@@ -112,7 +132,7 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Navigation - Kid-friendly colorful */}
+      {/* Navigation */}
       <nav className="bg-white shadow-md border-b-4 border-purple-400 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -148,7 +168,7 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {/* Tabs - Colorful */}
+      {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-2 mb-6 flex-wrap">
           <button
@@ -194,6 +214,11 @@ export function UserDashboard() {
           >
             <span className="text-2xl mr-2">📂</span>
             My Library
+            {currentUserData?.unlockedContent?.length > 0 && (
+              <span className="ml-2 bg-white text-green-600 px-2 py-0.5 rounded-full text-xs">
+                {currentUserData.unlockedContent.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -247,6 +272,11 @@ export function UserDashboard() {
           onClose={() => {
             setShowPremiumModal(false);
             setSelectedItem(null);
+            // Refresh data after modal closes
+            fetchUsers();
+            fetchStories();
+            fetchVideos();
+            fetchQuizzes();
           }}
         />
       )}

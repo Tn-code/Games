@@ -5,11 +5,12 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function AdminPremiumRequests() {
   const { user: currentUser } = useAuth();
-  const { data: requests, loading, updateItem, deleteItem } = useFirestore('premiumRequests');
-  const { data: users, loading: usersLoading, updateItem: updateUser } = useFirestore('users');
+  const { data: requests, loading, updateItem, deleteItem, fetchData } = useFirestore('premiumRequests');
+  const { data: users, loading: usersLoading, updateItem: updateUser, fetchData: fetchUsers } = useFirestore('users');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [filter, setFilter] = useState('pending');
+  const [processing, setProcessing] = useState(false);
 
   if (loading || usersLoading) return <LoadingSpinner />;
 
@@ -22,8 +23,10 @@ export function AdminPremiumRequests() {
 
   const approveRequest = async (request) => {
     if (!window.confirm(`Approve premium access for ${request.itemName}?`)) return;
+    setProcessing(true);
 
     try {
+      // 1. Update request status
       await updateItem(request.id, { 
         status: 'approved', 
         adminApproved: true,
@@ -31,35 +34,64 @@ export function AdminPremiumRequests() {
         approvedBy: currentUser.email
       });
 
+      // 2. Find the user
       const user = users.find(u => u.uid === request.userId);
       if (user) {
+        // 3. Get current unlocked content
         const unlocked = user.unlockedContent || [];
-        if (!unlocked.some(item => item.id === request.itemId && item.type === request.itemType)) {
-          await updateUser(user.id, {
-            unlockedContent: [
-              ...unlocked,
-              {
-                id: request.itemId,
-                name: request.itemName,
-                type: request.itemType,
-                grantedAt: new Date().toISOString(),
-                grantedBy: currentUser.email,
-                paid: true
-              }
-            ]
+        
+        // 4. Check if already unlocked
+        const alreadyUnlocked = unlocked.some(item => 
+          item.id === request.itemId && item.type === request.itemType
+        );
+        
+        if (!alreadyUnlocked) {
+          // 5. Add new content to user's unlocked content
+          const updatedUnlocked = [
+            ...unlocked,
+            {
+              id: request.itemId,
+              name: request.itemName,
+              type: request.itemType,
+              grantedAt: new Date().toISOString(),
+              grantedBy: currentUser.email,
+              paid: true
+            }
+          ];
+          
+          // 6. Update user in Firestore
+          await updateUser(user.id, { 
+            unlockedContent: updatedUnlocked 
           });
+          console.log('✅ Content added to user library:', request.itemName);
+        } else {
+          console.log('ℹ️ User already has this content');
         }
+      } else {
+        console.error('❌ User not found:', request.userId);
       }
 
+      // 7. Refresh data
+      await fetchData();
+      await fetchUsers();
+
       setMessage({ type: 'success', text: `✅ Premium access approved for ${request.itemName}` });
-      setTimeout(() => window.location.reload(), 2000);
+      
+      // 8. Clear message after 3 seconds
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 3000);
+      
     } catch (error) {
+      console.error('Error approving request:', error);
       setMessage({ type: 'error', text: `❌ Error: ${error.message}` });
     }
+    setProcessing(false);
   };
 
   const rejectRequest = async (request) => {
     if (!window.confirm(`Reject premium access for ${request.itemName}?`)) return;
+    setProcessing(true);
 
     try {
       await updateItem(request.id, { 
@@ -67,11 +99,18 @@ export function AdminPremiumRequests() {
         rejectedAt: new Date().toISOString(),
         rejectedBy: currentUser.email
       });
+      
+      await fetchData();
       setMessage({ type: 'success', text: `❌ Request rejected for ${request.itemName}` });
-      setTimeout(() => window.location.reload(), 2000);
+      
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 3000);
+      
     } catch (error) {
       setMessage({ type: 'error', text: `❌ Error: ${error.message}` });
     }
+    setProcessing(false);
   };
 
   const getStatusBadge = (status) => {
@@ -107,6 +146,9 @@ export function AdminPremiumRequests() {
             <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium">
               Pending: {requests.filter(r => r.status === 'pending').length}
             </span>
+            <span className="px-4 py-2 bg-green-100 text-green-700 rounded-xl font-medium">
+              Approved: {requests.filter(r => r.status === 'approved').length}
+            </span>
           </div>
         </div>
 
@@ -133,6 +175,11 @@ export function AdminPremiumRequests() {
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === 'pending' && requests.filter(r => r.status === 'pending').length > 0 && (
+                <span className="ml-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs">
+                  {requests.filter(r => r.status === 'pending').length}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -173,7 +220,7 @@ export function AdminPremiumRequests() {
                             {request.phoneNumber || 'No phone'}
                           </p>
                           {request.notes && (
-                            <p className="text-xs text-gray-400 mt-1 line-clamp-2">{request.notes}</p>
+                            <p className="text-xs text-gray-400 mt-1">{request.notes}</p>
                           )}
                         </div>
                       </td>
@@ -194,13 +241,15 @@ export function AdminPremiumRequests() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => approveRequest(request)}
-                              className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-all"
+                              disabled={processing}
+                              className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-all disabled:opacity-50"
                             >
                               <i className="fas fa-check mr-1"></i> Approve
                             </button>
                             <button
                               onClick={() => rejectRequest(request)}
-                              className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-all"
+                              disabled={processing}
+                              className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-all disabled:opacity-50"
                             >
                               <i className="fas fa-times mr-1"></i> Reject
                             </button>
@@ -209,6 +258,11 @@ export function AdminPremiumRequests() {
                         {request.status !== 'pending' && (
                           <span className="text-sm text-gray-500">
                             {request.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                            {request.approvedAt && (
+                              <span className="block text-xs text-gray-400">
+                                {new Date(request.approvedAt).toLocaleDateString()}
+                              </span>
+                            )}
                           </span>
                         )}
                       </td>
