@@ -14,8 +14,6 @@ import { db } from '../firebase/config';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
-
-// Admin email
 const ADMIN_EMAIL = 'houssinetrabelsi6@gmail.com';
 
 export function AuthProvider({ children }) {
@@ -43,7 +41,6 @@ export function AuthProvider({ children }) {
     try {
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
-      
       if (!userDoc.exists()) {
         await setDoc(userRef, {
           uid: user.uid,
@@ -109,16 +106,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const value = {
-    user,
-    loading,
-    isAdmin,
-    login,
-    register,
-    loginWithGoogle,
-    logout,
-    ADMIN_EMAIL
-  };
+  const value = { user, loading, isAdmin, login, register, loginWithGoogle, logout, ADMIN_EMAIL };
 
   return (
     <AuthContext.Provider value={value}>
