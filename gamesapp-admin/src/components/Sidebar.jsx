@@ -5,6 +5,8 @@ export function Sidebar({ activeTab, setActiveTab }) {
     { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
     { id: 'stories', icon: 'fa-book', label: 'Stories' },
     { id: 'create-story', icon: 'fa-plus-circle', label: 'Create Story' },
+    { id: 'videos', icon: 'fa-video', label: 'Video Stories' },
+    { id: 'create-video', icon: 'fa-plus-circle', label: 'Create Video' },
     { id: 'quizzes', icon: 'fa-puzzle-piece', label: 'Quizzes' },
     { id: 'create-quiz', icon: 'fa-plus-circle', label: 'Create Quiz' },
     { id: 'users', icon: 'fa-users', label: 'User Management' },
@@ -37,12 +39,12 @@ export function Sidebar({ activeTab, setActiveTab }) {
 
       <div className="pt-4 border-t border-gray-100">
         <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gray-50">
-          <div className="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center text-gray-600">
+          <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white">
             <i className="fas fa-user"></i>
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-800">Admin</p>
-            <p className="text-xs text-gray-500">admin@gamesapp.com</p>
+            <p className="text-xs text-gray-500">houssinetrabelsi6@gmail.com</p>
           </div>
         </div>
       </div>

@@ -65,6 +65,30 @@ export function Dashboard() {
             <StatsCard icon="puzzle-piece" title="Quizzes" value={stats.quizzes} color="purple" subtitle={`${stats.totalQuestions} questions`} />
             <StatsCard icon="users" title="Users" value={stats.users} color="green" />
           </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              <i className="fas fa-rocket text-blue-600 mr-2"></i>
+              Quick Actions
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <button onClick={() => setActiveTab('create-story')} className="p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all text-center">
+                <i className="fas fa-plus-circle text-2xl text-blue-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Add Story</p>
+              </button>
+              <button onClick={() => setActiveTab('create-video')} className="p-4 bg-red-50 rounded-xl hover:bg-red-100 transition-all text-center">
+                <i className="fas fa-video text-2xl text-red-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Add Video</p>
+              </button>
+              <button onClick={() => setActiveTab('create-quiz')} className="p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-all text-center">
+                <i className="fas fa-puzzle-piece text-2xl text-purple-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Add Quiz</p>
+              </button>
+              <button onClick={() => setActiveTab('users')} className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-all text-center">
+                <i className="fas fa-users text-2xl text-green-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Manage Users</p>
+              </button>
+            </div>
+          </div>
         </div>
       );
     }
