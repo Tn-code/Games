@@ -11,7 +11,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { db } from '../firebase/config';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 const AuthContext = createContext();
 const ADMIN_EMAIL = 'houssinetrabelsi6@gmail.com';
@@ -26,6 +26,7 @@ export function AuthProvider({ children }) {
       if (user) {
         const isAdminUser = user.email === ADMIN_EMAIL;
         setIsAdmin(isAdminUser);
+        // ALWAYS save user to Firestore when they sign in
         await saveUserToFirestore(user);
         setUser(user);
       } else {
@@ -56,20 +57,26 @@ export function AuthProvider({ children }) {
       };
       
       if (!userDoc.exists()) {
-        await setDoc(userRef, userData);
+        // Create new user document
+        await setDoc(userRef, {
+          ...userData,
+          createdAt: serverTimestamp()
+        });
         console.log('✅ New user saved to Firestore:', user.email);
       } else {
+        // Update existing user
         await setDoc(userRef, {
-          ...userDoc.data(),
-          lastLogin: new Date().toISOString(),
-          isAdmin: user.email === ADMIN_EMAIL
+          ...userData,
+          lastLogin: serverTimestamp()
         }, { merge: true });
+        console.log('🔄 User updated in Firestore:', user.email);
       }
     } catch (error) {
       console.error('Error saving user to Firestore:', error);
     }
   };
 
+  // Login with email/password
   const login = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -80,6 +87,7 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Register with email/password
   const register = async (email, password, displayName) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -92,6 +100,7 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Login with Google
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -104,6 +113,7 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Logout
   const logout = async () => {
     try {
       await signOut(auth);
@@ -113,7 +123,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const value = { user, loading, isAdmin, login, register, loginWithGoogle, logout, ADMIN_EMAIL };
+  const value = {
+    user,
+    loading,
+    isAdmin,
+    login,
+    register,
+    loginWithGoogle,
+    logout,
+    ADMIN_EMAIL
+  };
 
   return (
     <AuthContext.Provider value={value}>

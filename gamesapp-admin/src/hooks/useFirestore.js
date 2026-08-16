@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../firebase/config';
-import { collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc } from 'firebase/firestore';
 
 export function useFirestore(collectionName) {
   const [data, setData] = useState([]);
@@ -37,6 +37,20 @@ export function useFirestore(collectionName) {
     }
   };
 
+  const updateItem = async (id, data) => {
+    try {
+      const docRef = doc(db, collectionName, id);
+      await updateDoc(docRef, {
+        ...data,
+        updatedAt: Timestamp.now()
+      });
+      await fetchData();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
   const deleteItem = async (id) => {
     try {
       await deleteDoc(doc(db, collectionName, id));
@@ -51,5 +65,5 @@ export function useFirestore(collectionName) {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, fetchData, addItem, deleteItem };
+  return { data, loading, error, fetchData, addItem, updateItem, deleteItem };
 }

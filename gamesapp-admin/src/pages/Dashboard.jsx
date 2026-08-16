@@ -12,6 +12,7 @@ import { QuizzesList } from './QuizzesList';
 import { CreateQuiz } from './CreateQuiz';
 import { UserManagement } from './UserManagement';
 import { SyncUsers } from './SyncUsers';
+import { UserContentManager } from './UserContentManager';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -48,6 +49,7 @@ export function Dashboard() {
       case 'create-quiz': return <CreateQuiz />;
       case 'quizzes': return <QuizzesList />;
       case 'users': return <UserManagement />;
+      case 'user-content': return <UserContentManager />;
       case 'sync-users': return <SyncUsers />;
       default: return (
         <div className="flex-1 p-8">
@@ -89,9 +91,9 @@ export function Dashboard() {
                 <i className="fas fa-users text-2xl text-green-600 mb-2"></i>
                 <p className="text-sm font-medium text-gray-700">Manage Users</p>
               </button>
-              <button onClick={() => setActiveTab('sync-users')} className="p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-all text-center">
-                <i className="fas fa-sync text-2xl text-yellow-600 mb-2"></i>
-                <p className="text-sm font-medium text-gray-700">Sync Users</p>
+              <button onClick={() => setActiveTab('user-content')} className="p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-all text-center">
+                <i className="fas fa-user-lock text-2xl text-yellow-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">User Content</p>
               </button>
             </div>
           </div>
