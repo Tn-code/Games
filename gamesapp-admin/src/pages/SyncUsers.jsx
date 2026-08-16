@@ -1,61 +1,60 @@
 import React, { useState } from 'react';
-import { auth, db } from '../firebase/config';
-import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import { useAuth } from '../contexts/AuthContext';
+import { useFirestore } from '../hooks/useFirestore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function SyncUsers() {
-  const [loading, setLoading] = useState(false);
+  const { user: currentUser } = useAuth();
+  const { data: users, loading, addItem, fetchData } = useFirestore('users');
+  const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [syncedCount, setSyncedCount] = useState(0);
 
-  const syncUsers = async () => {
-    setLoading(true);
+  // Check if user exists in Firestore
+  const userExists = users.some(u => u.uid === currentUser?.uid);
+
+  const handleSync = async () => {
+    setSyncing(true);
     setMessage({ type: '', text: '' });
-    setSyncedCount(0);
 
     try {
-      // Get all users from Firebase Auth
-      const users = await auth.getUsers();
-      
-      let count = 0;
-      for (const user of users.users) {
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userRef);
-          
-          if (!userDoc.exists()) {
-            // Create user in Firestore
-            await setDoc(userRef, {
-              uid: user.uid,
-              email: user.email,
-              displayName: user.displayName || user.email?.split('@')[0] || 'User',
-              photoURL: user.photoURL || '',
-              createdAt: new Date().toISOString(),
-              isAdmin: user.email === 'houssinetrabelsi6@gmail.com',
-              purchases: [],
-              unlockedContent: []
-            });
-            count++;
-          }
-        } catch (error) {
-          console.error('Error syncing user:', error);
-        }
+      // If current user not in Firestore, add them
+      if (currentUser && !userExists) {
+        await addItem({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
+          photoURL: currentUser.photoURL || '',
+          createdAt: new Date().toISOString(),
+          isAdmin: currentUser.email === 'houssinetrabelsi6@gmail.com',
+          purchases: [],
+          unlockedContent: []
+        });
+        
+        setMessage({ 
+          type: 'success', 
+          text: '✅ Current user synced successfully!' 
+        });
+      } else {
+        setMessage({ 
+          type: 'info', 
+          text: 'ℹ️ Current user already exists in Firestore' 
+        });
       }
 
-      setSyncedCount(count);
-      setMessage({ 
-        type: 'success', 
-        text: `✅ Successfully synced ${count} users to Firestore!` 
-      });
+      // Refresh data
+      await fetchData();
+
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Sync error:', error);
       setMessage({ 
         type: 'error', 
-        text: `❌ Error syncing users: ${error.message}` 
+        text: `❌ Error: ${error.message}` 
       });
     }
-    setLoading(false);
+    setSyncing(false);
   };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="flex-1 p-8 bg-gray-50 min-h-screen">
@@ -67,36 +66,62 @@ export function SyncUsers() {
             </div>
             <h2 className="text-2xl font-bold text-gray-800">Sync Users</h2>
             <p className="text-gray-500 mt-2">
-              Import all users from Firebase Authentication to Firestore
+              Sync current user to Firestore
             </p>
           </div>
 
           {message.text && (
             <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
               message.type === 'success' 
-                ? 'bg-green-50 border border-green-200 text-green-700' 
+                ? 'bg-green-50 border border-green-200 text-green-700'
+                : message.type === 'info'
+                ? 'bg-blue-50 border border-blue-200 text-blue-700'
                 : 'bg-red-50 border border-red-200 text-red-700'
             }`}>
-              <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
+              <i className={`fas ${
+                message.type === 'success' ? 'fa-check-circle' :
+                message.type === 'info' ? 'fa-info-circle' :
+                'fa-exclamation-circle'
+              }`}></i>
               {message.text}
             </div>
           )}
 
-          {syncedCount > 0 && (
-            <div className="mb-6 p-4 bg-blue-50 rounded-xl text-center">
-              <p className="text-blue-700">
-                <i className="fas fa-users mr-2"></i>
-                {syncedCount} new users added to Firestore
-              </p>
+          {/* Current User Info */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+            <h3 className="font-medium text-gray-700 mb-2">Current User:</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl font-bold">
+                {currentUser?.displayName?.[0] || currentUser?.email?.[0] || 'U'}
+              </div>
+              <div>
+                <p className="font-medium text-gray-800">{currentUser?.displayName || 'No name'}</p>
+                <p className="text-sm text-gray-500">{currentUser?.email}</p>
+                <p className="text-xs text-gray-400">UID: {currentUser?.uid?.substring(0, 12)}...</p>
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="p-4 bg-green-50 rounded-xl text-center">
+              <p className="text-2xl font-bold text-green-600">{users.length}</p>
+              <p className="text-sm text-gray-600">Total Users in Firestore</p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-xl text-center">
+              <p className="text-2xl font-bold text-blue-600">
+                {userExists ? '✅' : '❌'}
+              </p>
+              <p className="text-sm text-gray-600">Current User in Firestore</p>
+            </div>
+          </div>
 
           <button
-            onClick={syncUsers}
-            disabled={loading}
+            onClick={handleSync}
+            disabled={syncing}
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
-            {loading ? (
+            {syncing ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 Syncing...
@@ -104,7 +129,7 @@ export function SyncUsers() {
             ) : (
               <>
                 <i className="fas fa-sync"></i>
-                Sync Users Now
+                {userExists ? 'Re-sync User' : 'Sync User Now'}
               </>
             )}
           </button>
@@ -112,8 +137,16 @@ export function SyncUsers() {
           <div className="mt-6 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
             <p className="text-sm text-yellow-800">
               <i className="fas fa-info-circle mr-2"></i>
-              This will import all users from Firebase Authentication to Firestore.
-              Users will be available in the User Management section after syncing.
+              This will sync the currently logged-in user to Firestore.
+              Users will be available in User Management after syncing.
+            </p>
+          </div>
+
+          <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <i className="fas fa-lightbulb mr-2"></i>
+              <strong>Tip:</strong> When new users sign in, they will be automatically added to Firestore.
+              Use this tool to sync existing users from Firebase Authentication.
             </p>
           </div>
         </div>

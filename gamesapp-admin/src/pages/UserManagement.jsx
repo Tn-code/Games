@@ -11,13 +11,11 @@ export function UserManagement() {
 
   if (loading) return <LoadingSpinner />;
 
-  // Filter users by search
   const filteredUsers = users.filter(user => 
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Get user stats
   const totalUsers = users.length;
   const adminUsers = users.filter(u => u.isAdmin === true).length;
   const regularUsers = totalUsers - adminUsers;
@@ -66,7 +64,23 @@ export function UserManagement() {
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
             <i className="fas fa-users text-6xl text-gray-300 mb-4"></i>
             <h3 className="text-xl font-medium text-gray-600">No users found</h3>
-            <p className="text-gray-400 mt-2">{searchTerm ? 'Try a different search term' : 'Users will appear here after they register'}</p>
+            <p className="text-gray-400 mt-2">
+              {searchTerm ? 'Try a different search term' : 
+                'Users will appear here after they register or after syncing'}
+            </p>
+            {totalUsers === 0 && (
+              <div className="mt-6">
+                <p className="text-sm text-gray-500 mb-3">To sync existing users:</p>
+                <div className="flex justify-center gap-4">
+                  <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm">
+                    Sign in with a user account
+                  </span>
+                  <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm">
+                    Or use the Sync Users feature
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -124,7 +138,11 @@ export function UserManagement() {
                           </button>
                           {user.uid !== currentUser?.uid && (
                             <button 
-                              onClick={() => deleteItem(user.id)}
+                              onClick={() => {
+                                if (window.confirm(`Delete user ${user.email}?`)) {
+                                  deleteItem(user.id);
+                                }
+                              }}
                               className="px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-all"
                             >
                               <i className="fas fa-trash mr-1"></i> Delete
