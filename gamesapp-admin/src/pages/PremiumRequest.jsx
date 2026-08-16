@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
-import { PAYMENT_CONFIG, PRICE_LABELS } from '../config/payment';
-import { LoadingSpinner } from '../components/LoadingSpinner';
+import { PAYMENT_CONFIG } from '../config/payment';
 
 export function PremiumRequest({ item, type, onClose }) {
   const { user } = useAuth();
@@ -28,7 +27,6 @@ export function PremiumRequest({ item, type, onClose }) {
     setLoading(true);
     setMessage({ type: '', text: '' });
 
-    // Validate phone number
     if (!formData.phoneNumber || formData.phoneNumber.length < 8) {
       setMessage({ type: 'error', text: '⚠️ Please enter a valid phone number (at least 8 digits)' });
       setLoading(false);
@@ -75,7 +73,6 @@ export function PremiumRequest({ item, type, onClose }) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
               <span className="text-3xl">⭐</span>
@@ -105,7 +102,6 @@ export function PremiumRequest({ item, type, onClose }) {
             </div>
           ) : (
             <>
-              {/* Item Details */}
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-4 mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-purple-200 rounded-xl flex items-center justify-center text-3xl">
@@ -123,7 +119,6 @@ export function PremiumRequest({ item, type, onClose }) {
                 </div>
               </div>
 
-              {/* Message */}
               {message.text && (
                 <div className={`mb-4 p-3 rounded-xl flex items-center gap-2 ${
                   message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
@@ -134,7 +129,6 @@ export function PremiumRequest({ item, type, onClose }) {
               )}
 
               <form onSubmit={handleRequest}>
-                {/* Contact Information */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <i className="fas fa-phone mr-2 text-purple-500"></i>
@@ -200,7 +194,6 @@ export function PremiumRequest({ item, type, onClose }) {
                   />
                 </div>
 
-                {/* Payment Method */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <i className="fas fa-credit-card mr-2 text-purple-500"></i>
@@ -232,7 +225,6 @@ export function PremiumRequest({ item, type, onClose }) {
                   </div>
                 </div>
 
-                {/* Info */}
                 <div className="bg-yellow-50 rounded-xl p-4 mb-4 border border-yellow-200">
                   <p className="text-sm text-yellow-800">
                     <i className="fas fa-info-circle mr-2"></i>

@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { PremiumRequest } from './PremiumRequest';
+import { db } from '../firebase/config';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export function UserDashboard() {
   const { user, logout } = useAuth();
@@ -16,16 +18,35 @@ export function UserDashboard() {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [premiumType, setPremiumType] = useState('story');
   const [viewingStory, setViewingStory] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [currentUserData, setCurrentUserData] = useState(null);
+  const [unlockedCount, setUnlockedCount] = useState(0);
 
-  // Refresh data every 10 seconds to check for approvals
+  // Real-time listener for current user
+  useEffect(() => {
+    if (!user) return;
+
+    const userRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        setCurrentUserData(data);
+        const count = (data.unlockedContent || []).length;
+        setUnlockedCount(count);
+        console.log('🔄 User data updated! Unlocked content:', count);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Refresh data periodically
   useEffect(() => {
     const interval = setInterval(() => {
       fetchUsers();
       fetchStories();
       fetchVideos();
       fetchQuizzes();
-    }, 10000);
+    }, 5000); // Check every 5 seconds
     
     return () => clearInterval(interval);
   }, []);
@@ -34,12 +55,13 @@ export function UserDashboard() {
     return <LoadingSpinner />;
   }
 
-  // Get current user from Firestore
-  const currentUserData = users.find(u => u.uid === user?.uid);
+  // Get user from users list (fallback)
+  const userFromList = users.find(u => u.uid === user?.uid);
+  const userData = currentUserData || userFromList;
 
   // Check if user has access to content
   const hasAccess = (itemId, type) => {
-    const unlocked = currentUserData?.unlockedContent || [];
+    const unlocked = userData?.unlockedContent || [];
     return unlocked.some(item => item.id === itemId && item.type === type);
   };
 
@@ -49,8 +71,25 @@ export function UserDashboard() {
     setShowPremiumModal(true);
   };
 
+  const handleModalClose = () => {
+    setShowPremiumModal(false);
+    setSelectedItem(null);
+    // Force refresh data
+    fetchUsers();
+    fetchStories();
+    fetchVideos();
+    fetchQuizzes();
+    // Also trigger a re-check
+    setTimeout(() => {
+      fetchUsers();
+    }, 1000);
+  };
+
   const handleViewContent = (item, type) => {
-    if (item.type === 'premium' && !hasAccess(item.id, type)) {
+    // Check if user has access
+    const hasAccess_ = hasAccess(item.id, type);
+    
+    if (item.type === 'premium' && !hasAccess_) {
       handlePremiumRequest(item, type);
       return;
     }
@@ -89,7 +128,7 @@ export function UserDashboard() {
                     <i className={`fas ${icon}`}></i>
                   </div>
                 )}
-                <div className="absolute top-3 right-3 flex gap-2">
+                <div className="absolute top-3 right-3 flex gap-2 flex-wrap">
                   {item.type === 'premium' && (
                     <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 rounded-full text-xs font-bold shadow-lg">
                       ⭐ Premium
@@ -160,6 +199,11 @@ export function UserDashboard() {
                   {user?.displayName || user?.email?.split('@')[0] || 'User'}
                 </span>
               </div>
+              {unlockedCount > 0 && (
+                <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                  {unlockedCount} unlocked
+                </span>
+              )}
               <button onClick={logout} className="text-gray-500 hover:text-gray-700 transition-all">
                 <i className="fas fa-sign-out-alt"></i>
               </button>
@@ -214,9 +258,9 @@ export function UserDashboard() {
           >
             <span className="text-2xl mr-2">📂</span>
             My Library
-            {currentUserData?.unlockedContent?.length > 0 && (
-              <span className="ml-2 bg-white text-green-600 px-2 py-0.5 rounded-full text-xs">
-                {currentUserData.unlockedContent.length}
+            {unlockedCount > 0 && (
+              <span className="ml-2 bg-white text-green-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                {unlockedCount}
               </span>
             )}
           </button>
@@ -230,7 +274,7 @@ export function UserDashboard() {
           {activeTab === 'library' && (
             <div>
               <h2 className="text-2xl font-bold text-gray-800 mb-4">📂 My Library</h2>
-              {currentUserData?.unlockedContent?.length === 0 ? (
+              {unlockedCount === 0 ? (
                 <div className="text-center py-12">
                   <i className="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
                   <p className="text-gray-500">Your library is empty</p>
@@ -238,7 +282,7 @@ export function UserDashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {currentUserData?.unlockedContent.map((item) => (
+                  {userData?.unlockedContent?.map((item) => (
                     <div key={item.id} className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-4 border-2 border-green-200">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center text-2xl">
@@ -269,15 +313,7 @@ export function UserDashboard() {
         <PremiumRequest
           item={selectedItem}
           type={premiumType}
-          onClose={() => {
-            setShowPremiumModal(false);
-            setSelectedItem(null);
-            // Refresh data after modal closes
-            fetchUsers();
-            fetchStories();
-            fetchVideos();
-            fetchQuizzes();
-          }}
+          onClose={handleModalClose}
         />
       )}
 

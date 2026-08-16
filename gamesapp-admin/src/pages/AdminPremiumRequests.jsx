@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useFirestore } from '../hooks/useFirestore';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { db } from '../firebase/config';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 
 export function AdminPremiumRequests() {
   const { user: currentUser } = useAuth();
@@ -22,21 +24,29 @@ export function AdminPremiumRequests() {
   });
 
   const approveRequest = async (request) => {
-    if (!window.confirm(`Approve premium access for ${request.itemName}?`)) return;
+    if (!window.confirm(`Approve premium access for "${request.itemName}"?`)) return;
     setProcessing(true);
+    setMessage({ type: '', text: '' });
 
     try {
-      // 1. Update request status
-      await updateItem(request.id, { 
-        status: 'approved', 
+      console.log('📝 Approving request for:', request.itemName);
+      console.log('User ID:', request.userId);
+      
+      // 1. Update request status in Firestore directly
+      const requestRef = doc(db, 'premiumRequests', request.id);
+      await updateDoc(requestRef, {
+        status: 'approved',
         adminApproved: true,
         approvedAt: new Date().toISOString(),
         approvedBy: currentUser.email
       });
+      console.log('✅ Request updated to approved');
 
       // 2. Find the user
       const user = users.find(u => u.uid === request.userId);
       if (user) {
+        console.log('✅ User found:', user.email);
+        
         // 3. Get current unlocked content
         const unlocked = user.unlockedContent || [];
         
@@ -46,68 +56,78 @@ export function AdminPremiumRequests() {
         );
         
         if (!alreadyUnlocked) {
-          // 5. Add new content to user's unlocked content
-          const updatedUnlocked = [
-            ...unlocked,
-            {
-              id: request.itemId,
-              name: request.itemName,
-              type: request.itemType,
-              grantedAt: new Date().toISOString(),
-              grantedBy: currentUser.email,
-              paid: true
-            }
-          ];
+          // 5. Create new content object
+          const newContent = {
+            id: request.itemId,
+            name: request.itemName,
+            type: request.itemType,
+            grantedAt: new Date().toISOString(),
+            grantedBy: currentUser.email,
+            paid: true
+          };
           
-          // 6. Update user in Firestore
-          await updateUser(user.id, { 
-            unlockedContent: updatedUnlocked 
+          // 6. Update user's unlocked content in Firestore directly
+          const userRef = doc(db, 'users', user.id);
+          await updateDoc(userRef, {
+            unlockedContent: [...unlocked, newContent]
           });
           console.log('✅ Content added to user library:', request.itemName);
+          
+          setMessage({ type: 'success', text: `✅ Premium access granted for "${request.itemName}" to ${user.email}` });
         } else {
           console.log('ℹ️ User already has this content');
+          setMessage({ type: 'info', text: `ℹ️ User already has access to "${request.itemName}"` });
         }
       } else {
         console.error('❌ User not found:', request.userId);
+        setMessage({ type: 'error', text: `❌ User not found for this request` });
       }
 
       // 7. Refresh data
       await fetchData();
       await fetchUsers();
-
-      setMessage({ type: 'success', text: `✅ Premium access approved for ${request.itemName}` });
       
-      // 8. Clear message after 3 seconds
+      // 8. Update local state to reflect changes
       setTimeout(() => {
-        setMessage({ type: '', text: '' });
-      }, 3000);
+        window.location.reload();
+      }, 2000);
       
     } catch (error) {
-      console.error('Error approving request:', error);
+      console.error('❌ Error approving request:', error);
       setMessage({ type: 'error', text: `❌ Error: ${error.message}` });
     }
     setProcessing(false);
   };
 
   const rejectRequest = async (request) => {
-    if (!window.confirm(`Reject premium access for ${request.itemName}?`)) return;
+    if (!window.confirm(`Reject premium access for "${request.itemName}"?`)) return;
     setProcessing(true);
+    setMessage({ type: '', text: '' });
 
     try {
-      await updateItem(request.id, { 
-        status: 'rejected', 
+      console.log('📝 Rejecting request for:', request.itemName);
+      
+      // 1. Update request status in Firestore directly
+      const requestRef = doc(db, 'premiumRequests', request.id);
+      await updateDoc(requestRef, {
+        status: 'rejected',
         rejectedAt: new Date().toISOString(),
         rejectedBy: currentUser.email
       });
-      
+      console.log('✅ Request updated to rejected');
+
+      // 2. Refresh data
       await fetchData();
-      setMessage({ type: 'success', text: `❌ Request rejected for ${request.itemName}` });
+      await fetchUsers();
+
+      setMessage({ type: 'success', text: `❌ Request rejected for "${request.itemName}"` });
       
       setTimeout(() => {
-        setMessage({ type: '', text: '' });
-      }, 3000);
+        window.location.reload();
+      }, 2000);
       
     } catch (error) {
+      console.error('❌ Error rejecting request:', error);
       setMessage({ type: 'error', text: `❌ Error: ${error.message}` });
     }
     setProcessing(false);
@@ -156,9 +176,11 @@ export function AdminPremiumRequests() {
           <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
             message.type === 'success' 
               ? 'bg-green-50 border border-green-200 text-green-700' 
+              : message.type === 'info'
+              ? 'bg-blue-50 border border-blue-200 text-blue-700'
               : 'bg-red-50 border border-red-200 text-red-700'
           }`}>
-            <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
+            <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : message.type === 'info' ? 'fa-info-circle' : 'fa-exclamation-circle'}`}></i>
             {message.text}
           </div>
         )}
