@@ -11,17 +11,39 @@ export function PremiumRequest({ item, type, onClose }) {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [step, setStep] = useState('request');
+  const [formData, setFormData] = useState({
+    phoneNumber: '',
+    fullName: user?.displayName || '',
+    email: user?.email || '',
+    notes: ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleRequest = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ type: '', text: '' });
 
+    // Validate phone number
+    if (!formData.phoneNumber || formData.phoneNumber.length < 8) {
+      setMessage({ type: 'error', text: '⚠️ Please enter a valid phone number (at least 8 digits)' });
+      setLoading(false);
+      return;
+    }
+
     try {
       const requestData = {
         userId: user.uid,
         userEmail: user.email,
         userName: user.displayName || user.email,
+        fullName: formData.fullName || user.displayName || user.email,
+        phoneNumber: formData.phoneNumber,
+        email: formData.email || user.email,
+        notes: formData.notes || '',
         itemId: item.id,
         itemName: item.name || item.title,
         itemType: type,
@@ -76,7 +98,7 @@ export function PremiumRequest({ item, type, onClose }) {
               </p>
               <button
                 onClick={onClose}
-                className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium"
+                className="mt-6 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:shadow-lg transition-all font-medium"
               >
                 Close
               </button>
@@ -112,6 +134,72 @@ export function PremiumRequest({ item, type, onClose }) {
               )}
 
               <form onSubmit={handleRequest}>
+                {/* Contact Information */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <i className="fas fa-phone mr-2 text-purple-500"></i>
+                    Phone Number * (for contact)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-3 bg-gray-100 rounded-xl text-gray-600">+216</span>
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleChange}
+                      placeholder="12 345 678"
+                      className="input-field flex-1"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">We'll contact you on this number</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <i className="fas fa-user mr-1 text-gray-400"></i>
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      placeholder="Your name"
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <i className="fas fa-envelope mr-1 text-gray-400"></i>
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="your@email.com"
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <i className="fas fa-comment mr-1 text-gray-400"></i>
+                    Additional Notes (Optional)
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    placeholder="Any special requests or questions..."
+                    className="input-field min-h-[60px]"
+                  />
+                </div>
+
                 {/* Payment Method */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -172,7 +260,7 @@ export function PremiumRequest({ item, type, onClose }) {
                 </button>
 
                 <p className="text-xs text-gray-400 text-center mt-3">
-                  You will be notified by email when approved
+                  You will be contacted on your phone number for payment details
                 </p>
               </form>
             </>

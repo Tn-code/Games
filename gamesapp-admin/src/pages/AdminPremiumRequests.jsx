@@ -24,7 +24,6 @@ export function AdminPremiumRequests() {
     if (!window.confirm(`Approve premium access for ${request.itemName}?`)) return;
 
     try {
-      // Update request status
       await updateItem(request.id, { 
         status: 'approved', 
         adminApproved: true,
@@ -32,7 +31,6 @@ export function AdminPremiumRequests() {
         approvedBy: currentUser.email
       });
 
-      // Add content to user's unlocked content
       const user = users.find(u => u.uid === request.userId);
       if (user) {
         const unlocked = user.unlockedContent || [];
@@ -97,7 +95,6 @@ export function AdminPremiumRequests() {
   return (
     <div className="flex-1 p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
@@ -108,12 +105,11 @@ export function AdminPremiumRequests() {
           </div>
           <div className="flex gap-3">
             <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium">
-              Total: {requests.filter(r => r.status === 'pending').length} pending
+              Pending: {requests.filter(r => r.status === 'pending').length}
             </span>
           </div>
         </div>
 
-        {/* Message */}
         {message.text && (
           <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
             message.type === 'success' 
@@ -125,8 +121,7 @@ export function AdminPremiumRequests() {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           {['all', 'pending', 'approved', 'rejected'].map((f) => (
             <button
               key={f}
@@ -142,7 +137,6 @@ export function AdminPremiumRequests() {
           ))}
         </div>
 
-        {/* Requests List */}
         {filteredRequests.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
             <i className="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
@@ -156,8 +150,8 @@ export function AdminPremiumRequests() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Content</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -168,15 +162,23 @@ export function AdminPremiumRequests() {
                     <tr key={request.id} className="hover:bg-gray-50 transition-all">
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-gray-800">{request.userName || request.userEmail}</p>
+                          <p className="font-medium text-gray-800">{request.fullName || request.userName || request.userEmail}</p>
                           <p className="text-xs text-gray-500">{request.userEmail}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-gray-800">{request.itemName}</p>
-                        <p className="text-xs text-gray-500">ID: {request.itemId?.substring(0, 8)}</p>
+                        <div>
+                          <p className="font-medium text-blue-600">
+                            <i className="fas fa-phone mr-1"></i>
+                            {request.phoneNumber || 'No phone'}
+                          </p>
+                          {request.notes && (
+                            <p className="text-xs text-gray-400 mt-1 line-clamp-2">{request.notes}</p>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
+                        <p className="font-medium text-gray-800">{request.itemName}</p>
                         <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                           {request.itemType}
                         </span>
