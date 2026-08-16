@@ -41,7 +41,9 @@ export function AuthProvider({ children }) {
     try {
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
+      
       if (!userDoc.exists()) {
+        // Create new user
         await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
@@ -52,7 +54,9 @@ export function AuthProvider({ children }) {
           purchases: [],
           unlockedContent: []
         });
+        console.log('✅ New user saved to Firestore:', user.email);
       } else {
+        // Update existing user
         await setDoc(userRef, {
           ...userDoc.data(),
           lastLogin: new Date().toISOString(),
@@ -60,13 +64,14 @@ export function AuthProvider({ children }) {
         }, { merge: true });
       }
     } catch (error) {
-      console.error('Error saving user:', error);
+      console.error('Error saving user to Firestore:', error);
     }
   };
 
   const login = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await saveUserToFirestore(userCredential.user);
       return { success: true, user: userCredential.user };
     } catch (error) {
       return { success: false, error: error.message };

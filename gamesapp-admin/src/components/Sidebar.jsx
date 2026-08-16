@@ -10,6 +10,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
     { id: 'quizzes', icon: 'fa-puzzle-piece', label: 'Quizzes' },
     { id: 'create-quiz', icon: 'fa-plus-circle', label: 'Create Quiz' },
     { id: 'users', icon: 'fa-users', label: 'User Management' },
+    { id: 'sync-users', icon: 'fa-sync', label: 'Sync Users' },
   ];
 
   return (

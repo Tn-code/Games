@@ -11,6 +11,7 @@ import { CreateVideoStory } from './CreateVideoStory';
 import { QuizzesList } from './QuizzesList';
 import { CreateQuiz } from './CreateQuiz';
 import { UserManagement } from './UserManagement';
+import { SyncUsers } from './SyncUsers';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -47,6 +48,7 @@ export function Dashboard() {
       case 'create-quiz': return <CreateQuiz />;
       case 'quizzes': return <QuizzesList />;
       case 'users': return <UserManagement />;
+      case 'sync-users': return <SyncUsers />;
       default: return (
         <div className="flex-1 p-8">
           <div className="flex justify-between items-center mb-8">
@@ -70,7 +72,7 @@ export function Dashboard() {
               <i className="fas fa-rocket text-blue-600 mr-2"></i>
               Quick Actions
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <button onClick={() => setActiveTab('create-story')} className="p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all text-center">
                 <i className="fas fa-plus-circle text-2xl text-blue-600 mb-2"></i>
                 <p className="text-sm font-medium text-gray-700">Add Story</p>
@@ -86,6 +88,10 @@ export function Dashboard() {
               <button onClick={() => setActiveTab('users')} className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-all text-center">
                 <i className="fas fa-users text-2xl text-green-600 mb-2"></i>
                 <p className="text-sm font-medium text-gray-700">Manage Users</p>
+              </button>
+              <button onClick={() => setActiveTab('sync-users')} className="p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-all text-center">
+                <i className="fas fa-sync text-2xl text-yellow-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Sync Users</p>
               </button>
             </div>
           </div>
