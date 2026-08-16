@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #f0f4f8; }
+
+@layer components {
+  .sidebar-item { @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer; }
+  .sidebar-item:hover { @apply bg-blue-50 text-blue-600; }
+  .sidebar-item.active { @apply bg-blue-600 text-white shadow-lg shadow-blue-600/30; }
+  .sidebar-item.active:hover { @apply bg-blue-700; }
+  .card-hover { @apply transition-all duration-200 hover:shadow-xl hover:-translate-y-1; }
+  .input-field { @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all; }
+  .btn-primary { @apply px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all duration-200 shadow-lg shadow-blue-600/30; }
+  .btn-secondary { @apply px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200; }
+  .stat-card { @apply bg-white p-6 rounded-2xl border border-gray-100 card-hover; }
+}
