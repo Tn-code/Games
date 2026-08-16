@@ -42,21 +42,23 @@ export function AuthProvider({ children }) {
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
       
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || user.email?.split('@')[0] || 'User',
+        photoURL: user.photoURL || '',
+        createdAt: user.metadata?.creationTime || new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        isAdmin: user.email === ADMIN_EMAIL,
+        providers: user.providerData?.map(p => p.providerId) || ['password'],
+        purchases: [],
+        unlockedContent: []
+      };
+      
       if (!userDoc.exists()) {
-        // Create new user
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName || user.email?.split('@')[0] || 'User',
-          photoURL: user.photoURL || '',
-          createdAt: new Date().toISOString(),
-          isAdmin: user.email === ADMIN_EMAIL,
-          purchases: [],
-          unlockedContent: []
-        });
+        await setDoc(userRef, userData);
         console.log('✅ New user saved to Firestore:', user.email);
       } else {
-        // Update existing user
         await setDoc(userRef, {
           ...userDoc.data(),
           lastLogin: new Date().toISOString(),
