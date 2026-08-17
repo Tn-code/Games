@@ -10,6 +10,7 @@ export function CreateQuiz() {
     difficulty: 'easy',
     timeLimit: 5,
     points: 10,
+    type: 'free',
     questions: [
       {
         question: '',
@@ -46,6 +47,15 @@ export function CreateQuiz() {
   const handleOptionChange = (qIndex, oIndex, field, value) => {
     const newQuestions = [...formData.questions];
     newQuestions[qIndex][field][oIndex] = value;
+    setFormData(prev => ({
+      ...prev,
+      questions: newQuestions
+    }));
+  };
+
+  const handleCorrectAnswerChange = (qIndex, value) => {
+    const newQuestions = [...formData.questions];
+    newQuestions[qIndex].correctAnswer = parseInt(value);
     setFormData(prev => ({
       ...prev,
       questions: newQuestions
@@ -150,14 +160,20 @@ export function CreateQuiz() {
         setLoading(false);
         return;
       }
+      
+      // Check if correct answer is selected
+      if (q.correctAnswer === null || q.correctAnswer === undefined) {
+        setMessage({ type: 'error', text: `⚠️ Please select the correct answer for question ${i + 1}` });
+        setLoading(false);
+        return;
+      }
     }
 
     try {
       const quizData = {
         ...formData,
         createdAt: new Date().toISOString(),
-        totalQuestions: formData.questions.length,
-        type: 'free' // Default to free, can be premium
+        totalQuestions: formData.questions.length
       };
 
       const result = await addItem(quizData);
@@ -175,6 +191,7 @@ export function CreateQuiz() {
           difficulty: 'easy',
           timeLimit: 5,
           points: 10,
+          type: 'free',
           questions: [
             {
               question: '',
@@ -194,13 +211,24 @@ export function CreateQuiz() {
     setLoading(false);
   };
 
+  // Get letter for option
+  const getOptionLetter = (index) => {
+    return String.fromCharCode(65 + index);
+  };
+
+  // Get color for option
+  const getOptionColor = (index) => {
+    const colors = ['blue', 'green', 'purple', 'orange'];
+    return colors[index % colors.length];
+  };
+
   return (
-    <div className="flex-1 p-8 bg-gray-50 min-h-screen">
+    <div className="flex-1 p-8 bg-gradient-to-br from-gray-50 to-purple-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8 animate-fadeInDown">
           <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <i className="fas fa-plus-circle text-purple-600"></i>
+            <i className="fas fa-plus-circle text-purple-600 animate-pulse"></i>
             Create New Quiz
           </h2>
           <p className="text-gray-500 mt-2">Create a quiz with questions in French and Arabic</p>
@@ -219,7 +247,7 @@ export function CreateQuiz() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 animate-fadeInUp">
+        <form onSubmit={handleSubmit} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 animate-fadeInUp">
           {/* Quiz Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Title - French */}
@@ -288,6 +316,38 @@ export function CreateQuiz() {
                 dir="rtl"
                 required
               />
+            </div>
+
+            {/* Quiz Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <i className="fas fa-tag text-yellow-500 mr-2"></i>
+                Quiz Type
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-all">
+                  <input
+                    type="radio"
+                    name="type"
+                    value="free"
+                    checked={formData.type === 'free'}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-green-600"
+                  />
+                  <span className="font-medium">📖 Free</span>
+                </label>
+                <label className="flex items-center gap-2 p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-all">
+                  <input
+                    type="radio"
+                    name="type"
+                    value="premium"
+                    checked={formData.type === 'premium'}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-purple-600"
+                  />
+                  <span className="font-medium">⭐ Premium</span>
+                </label>
+              </div>
             </div>
 
             {/* Quiz Settings */}
@@ -414,42 +474,67 @@ export function CreateQuiz() {
                     />
                   </div>
 
-                  {/* Options */}
+                  {/* Options with Correct Answer Selection */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm text-gray-600 mb-2">Options *</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <i className="fas fa-list-ul text-purple-500 mr-2"></i>
+                      Options * <span className="text-xs text-gray-400">(Select the correct answer)</span>
+                    </label>
+                    <div className="grid grid-cols-1 gap-3">
                       {q.options.map((_, oIndex) => (
-                        <div key={oIndex} className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name={`correct-${qIndex}`}
-                            checked={q.correctAnswer === oIndex}
-                            onChange={() => handleQuestionChange(qIndex, 'correctAnswer', oIndex)}
-                            className="w-4 h-4 text-purple-600 cursor-pointer"
-                          />
+                        <div 
+                          key={oIndex} 
+                          className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-300 ${
+                            q.correctAnswer === oIndex 
+                              ? 'border-green-500 bg-green-50 shadow-lg shadow-green-200' 
+                              : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleCorrectAnswerChange(qIndex, oIndex)}
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                              q.correctAnswer === oIndex 
+                                ? 'border-green-500 bg-green-500 text-white scale-110' 
+                                : 'border-gray-300 hover:border-purple-400'
+                            }`}
+                          >
+                            {q.correctAnswer === oIndex && (
+                              <i className="fas fa-check text-xs"></i>
+                            )}
+                          </button>
                           <div className="flex-1 grid grid-cols-2 gap-2">
                             <input
                               type="text"
                               value={q.options[oIndex] || ''}
                               onChange={(e) => handleOptionChange(qIndex, oIndex, 'options', e.target.value)}
-                              className="input-field text-sm"
+                              className={`input-field text-sm ${
+                                q.correctAnswer === oIndex ? 'border-green-400 bg-green-50' : ''
+                              }`}
                               placeholder={`Option ${oIndex + 1} (FR)`}
                             />
                             <input
                               type="text"
                               value={q.optionsArabic[oIndex] || ''}
                               onChange={(e) => handleOptionChange(qIndex, oIndex, 'optionsArabic', e.target.value)}
-                              className="input-field text-sm"
+                              className={`input-field text-sm ${
+                                q.correctAnswer === oIndex ? 'border-green-400 bg-green-50' : ''
+                              }`}
                               placeholder={`Option ${oIndex + 1} (AR)`}
                               dir="rtl"
                             />
                           </div>
+                          {q.correctAnswer === oIndex && (
+                            <span className="text-xs font-bold text-green-600 animate-pulse">
+                              ✅ Correct
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
                     <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                      <i className="fas fa-info-circle"></i>
-                      Select the radio button for the correct answer
+                      <i className="fas fa-info-circle text-purple-500"></i>
+                      Click on the circle next to the correct answer
                     </p>
                   </div>
                 </div>
@@ -489,6 +574,7 @@ export function CreateQuiz() {
                   difficulty: 'easy',
                   timeLimit: 5,
                   points: 10,
+                  type: 'free',
                   questions: [
                     {
                       question: '',
@@ -516,10 +602,10 @@ export function CreateQuiz() {
             Tips:
           </h4>
           <ul className="mt-2 text-sm text-purple-700 space-y-1">
+            <li>• Click the circle next to an option to mark it as the correct answer</li>
             <li>• Questions and options must be in both French and Arabic</li>
             <li>• Choose 3 or 4 options per question</li>
-            <li>• Select the correct answer by clicking the radio button</li>
-            <li>• Add as many questions as you want</li>
+            <li>• The correct answer will be highlighted in green</li>
           </ul>
         </div>
       </div>
