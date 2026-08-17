@@ -4,13 +4,13 @@ import { useFirestore } from '../hooks/useFirestore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { PremiumRequest } from './PremiumRequest';
 import { db } from '../firebase/config';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 
 export function UserDashboard() {
   const { user, logout } = useAuth();
-  const { data: stories, loading: storiesLoading, fetchData: fetchStories } = useFirestore('stories');
-  const { data: videos, loading: videosLoading, fetchData: fetchVideos } = useFirestore('videos');
-  const { data: quizzes, loading: quizzesLoading, fetchData: fetchQuizzes } = useFirestore('quizzes');
+  const { data: stories, loading: storiesLoading } = useFirestore('stories');
+  const { data: videos, loading: videosLoading } = useFirestore('videos');
+  const { data: quizzes, loading: quizzesLoading } = useFirestore('quizzes');
   const { data: users, loading: usersLoading, fetchData: fetchUsers } = useFirestore('users');
   
   const [activeTab, setActiveTab] = useState('stories');
@@ -21,8 +21,9 @@ export function UserDashboard() {
   const [currentUserData, setCurrentUserData] = useState(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [isListening, setIsListening] = useState(false);
+  const [unlockedIds, setUnlockedIds] = useState([]);
 
-  // Real-time listener for current user - runs once
+  // Real-time listener for current user
   useEffect(() => {
     if (!user || isListening) return;
 
@@ -33,15 +34,22 @@ export function UserDashboard() {
     const unsubscribe = onSnapshot(userRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
-        setCurrentUserData(data);
-        const count = (data.unlockedContent || []).length;
-        setUnlockedCount(count);
-        console.log('🔄 User data updated! Unlocked content:', count);
+        console.log('📊 User data received:', data);
+        console.log('📊 Unlocked content:', data.unlockedContent || []);
         
-        // Show a notification if new content was unlocked
-        if (count > 0) {
-          console.log('✅ User has unlocked content!');
-        }
+        setCurrentUserData(data);
+        const unlocked = data.unlockedContent || [];
+        const count = unlocked.length;
+        setUnlockedCount(count);
+        
+        // Extract IDs for quick lookup
+        const ids = unlocked.map(item => item.id);
+        setUnlockedIds(ids);
+        
+        console.log(`✅ User has ${count} unlocked items:`, ids);
+        console.log('🎉 Unlocked content details:', unlocked);
+      } else {
+        console.log('❌ User document not found in Firestore');
       }
     }, (error) => {
       console.error('❌ Error listening to user updates:', error);
@@ -54,24 +62,66 @@ export function UserDashboard() {
     };
   }, [user]);
 
-  // Initial data fetch - runs once
+  // Also check for updates periodically
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const unlocked = data.unlockedContent || [];
+          const count = unlocked.length;
+          if (count !== unlockedCount) {
+            console.log('🔄 Detected change in unlocked content:', count);
+            setUnlockedCount(count);
+            setCurrentUserData(data);
+            const ids = unlocked.map(item => item.id);
+            setUnlockedIds(ids);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user data:', error);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [user, unlockedCount]);
+
+  // Initial data fetch
   useEffect(() => {
     if (user) {
       fetchUsers();
-      fetchStories();
-      fetchVideos();
-      fetchQuizzes();
     }
   }, [user]);
+
+  if (storiesLoading || videosLoading || quizzesLoading || usersLoading) {
+    return <LoadingSpinner />;
+  }
 
   // Get user from users list (fallback)
   const userFromList = users.find(u => u.uid === user?.uid);
   const userData = currentUserData || userFromList;
 
-  // Check if user has access to content
+  // Check if user has access to content - improved to check by ID
   const hasAccess = (itemId, type) => {
     const unlocked = userData?.unlockedContent || [];
-    return unlocked.some(item => item.id === itemId && item.type === type);
+    // Check by ID and type
+    const found = unlocked.some(item => {
+      // If type is provided, check both id and type
+      if (type) {
+        return item.id === itemId && item.type === type;
+      }
+      // If no type, just check ID (for backward compatibility)
+      return item.id === itemId;
+    });
+    
+    // Also check the unlockedIds list
+    const foundById = unlockedIds.includes(itemId);
+    
+    return found || foundById;
   };
 
   const handlePremiumRequest = (item, type) => {
@@ -83,12 +133,12 @@ export function UserDashboard() {
   const handleModalClose = () => {
     setShowPremiumModal(false);
     setSelectedItem(null);
-    // Refresh data once after modal closes
     fetchUsers();
   };
 
   const handleViewContent = (item, type) => {
     const hasAccess_ = hasAccess(item.id, type);
+    console.log(`🔍 Checking access for ${item.id}:`, hasAccess_);
     
     if (item.type === 'premium' && !hasAccess_) {
       handlePremiumRequest(item, type);
@@ -99,10 +149,6 @@ export function UserDashboard() {
       setViewingStory(item);
     }
   };
-
-  if (storiesLoading || videosLoading || quizzesLoading || usersLoading) {
-    return <LoadingSpinner />;
-  }
 
   const renderContent = (items, type, icon, color) => {
     if (items.length === 0) {
@@ -117,11 +163,14 @@ export function UserDashboard() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => {
-          const isLocked = item.type === 'premium' && !hasAccess(item.id, type);
-          const isUnlocked = item.type === 'premium' && hasAccess(item.id, type);
+          const itemId = item.id || item._id;
+          const isLocked = item.type === 'premium' && !hasAccess(itemId, type);
+          const isUnlocked = item.type === 'premium' && hasAccess(itemId, type);
+          
+          console.log(`📊 Item ${item.name || item.title}: locked=${isLocked}, unlocked=${isUnlocked}`);
           
           return (
-            <div key={item.id} className={`border rounded-2xl overflow-hidden hover:shadow-xl transition-all ${
+            <div key={itemId} className={`border rounded-2xl overflow-hidden hover:shadow-xl transition-all ${
               isLocked ? 'opacity-75' : ''
             }`}>
               <div className="relative">
@@ -294,7 +343,7 @@ export function UserDashboard() {
                         </div>
                         <div>
                           <p className="font-bold text-gray-800">{item.name}</p>
-                          <p className="text-xs text-gray-500 capitalize">{item.type}</p>
+                          <p className="text-xs text-gray-500 capitalize">{item.type || 'Unknown'}</p>
                         </div>
                       </div>
                       <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
