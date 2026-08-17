@@ -5,6 +5,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
     { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
     { id: 'premium-requests', icon: 'fa-gem', label: 'Premium Requests' },
     { id: 'quick-fix', icon: 'fa-tools', label: 'Quick Fix' },
+    { id: 'force-unlock', icon: 'fa-bolt', label: 'Force Unlock' },
     { id: 'stories', icon: 'fa-book', label: 'Stories' },
     { id: 'create-story', icon: 'fa-plus-circle', label: 'Create Story' },
     { id: 'videos', icon: 'fa-video', label: 'Video Stories' },

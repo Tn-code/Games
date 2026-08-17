@@ -15,6 +15,7 @@ import { SyncUsers } from './SyncUsers';
 import { UserContentManager } from './UserContentManager';
 import { AdminPremiumRequests } from './AdminPremiumRequests';
 import { QuickFix } from './QuickFix';
+import { ForceUnlock } from './ForceUnlock';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -52,6 +53,7 @@ export function Dashboard() {
     switch(activeTab) {
       case 'premium-requests': return <AdminPremiumRequests />;
       case 'quick-fix': return <QuickFix />;
+      case 'force-unlock': return <ForceUnlock />;
       case 'create-story': return <CreateStory />;
       case 'stories': return <StoriesList />;
       case 'videos': return <VideoStoriesList />;
@@ -88,7 +90,7 @@ export function Dashboard() {
               <i className="fas fa-rocket text-purple-600 mr-2"></i>
               Quick Actions
             </h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <button onClick={() => setActiveTab('premium-requests')} className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl hover:shadow-lg transition-all text-center">
                 <i className="fas fa-gem text-2xl text-purple-600 mb-2"></i>
                 <p className="text-sm font-medium text-gray-700">Requests</p>
@@ -100,6 +102,10 @@ export function Dashboard() {
               <button onClick={() => setActiveTab('quick-fix')} className="p-4 bg-yellow-50 rounded-xl hover:shadow-lg transition-all text-center">
                 <i className="fas fa-tools text-2xl text-yellow-600 mb-2"></i>
                 <p className="text-sm font-medium text-gray-700">Quick Fix</p>
+              </button>
+              <button onClick={() => setActiveTab('force-unlock')} className="p-4 bg-red-50 rounded-xl hover:shadow-lg transition-all text-center">
+                <i className="fas fa-bolt text-2xl text-red-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Force Unlock</p>
               </button>
             </div>
           </div>
