@@ -23,7 +23,9 @@ export function UserDashboard() {
   const [currentUserData, setCurrentUserData] = useState(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [unlockedItems, setUnlockedItems] = useState([]);
+  const [language, setLanguage] = useState('fr'); // 'fr' or 'ar'
 
+  // Real-time listener for user data
   useEffect(() => {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
@@ -77,12 +79,24 @@ export function UserDashboard() {
     else if (type === 'quiz') setPlayingQuiz(item);
   };
 
-  const renderContent = (items, type, icon, color, delay = 0) => {
+  const toggleLanguage = () => {
+    setLanguage(language === 'fr' ? 'ar' : 'fr');
+  };
+
+  const getDisplayName = (item) => {
+    return language === 'fr' ? item.name || item.title : item.nameArabic || item.titleArabic;
+  };
+
+  const getDisplayContent = (item) => {
+    return language === 'fr' ? item.content : item.contentArabic;
+  };
+
+  const renderContent = (items, type, icon, color) => {
     if (items.length === 0) {
       return (
         <div className="text-center py-12 animate-fadeInUp">
           <i className={`fas ${icon} text-6xl text-gray-300 mb-4 floating`}></i>
-          <p className="text-gray-500">No {type}s available yet</p>
+          <p className="text-gray-500">{language === 'fr' ? `Aucun ${type} disponible` : `لا يوجد ${type === 'story' ? 'قصص' : type === 'video' ? 'فيديوهات' : 'اختبارات'}`}</p>
         </div>
       );
     }
@@ -92,6 +106,7 @@ export function UserDashboard() {
         {items.map((item, index) => {
           const isUnlocked = hasAccess(item.id);
           const isLocked = item.type === 'premium' && !isUnlocked;
+          const displayName = getDisplayName(item);
           
           return (
             <div 
@@ -103,7 +118,7 @@ export function UserDashboard() {
                 {item.imageUrl ? (
                   <img 
                     src={item.imageUrl} 
-                    alt={item.name || item.title} 
+                    alt={displayName} 
                     className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110" 
                   />
                 ) : (
@@ -114,25 +129,24 @@ export function UserDashboard() {
                 <div className="absolute top-3 right-3 flex gap-2 flex-wrap">
                   {item.type === 'premium' && (
                     <span className="badge-premium animate-pulse">
-                      ⭐ Premium
+                      ⭐ {language === 'fr' ? 'Premium' : 'مميز'}
                     </span>
                   )}
                   {isLocked && (
                     <span className="badge-locked">
-                      🔒 Locked
+                      🔒 {language === 'fr' ? 'Fermé' : 'مغلق'}
                     </span>
                   )}
                   {isUnlocked && (
                     <span className="badge-unlocked animate-bounceIn">
-                      ✅ Unlocked
+                      ✅ {language === 'fr' ? 'Débloqué' : 'مفتوح'}
                     </span>
                   )}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               <div className="p-4">
-                <h3 className="font-bold text-lg text-gray-800">{item.name || item.title}</h3>
-                <p className="text-sm text-gray-500">{item.nameArabic || item.titleArabic}</p>
+                <h3 className="font-bold text-lg text-gray-800">{displayName}</h3>
                 <button
                   onClick={() => handleViewContent(item, type)}
                   className={`mt-3 w-full py-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 ${
@@ -143,7 +157,7 @@ export function UserDashboard() {
                       : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-lg hover:shadow-blue-500/30'
                   }`}
                 >
-                  {isLocked ? '⭐ Request Premium' : isUnlocked ? '✅ Access Granted' : type === 'story' ? '📖 Read' : type === 'quiz' ? '🧠 Play Quiz' : '▶️ Watch'}
+                  {isLocked ? (language === 'fr' ? '⭐ Demander Premium' : '⭐ طلب مميز') : isUnlocked ? (language === 'fr' ? '✅ Accès Accordé' : '✅ تم الفتح') : type === 'story' ? (language === 'fr' ? '📖 Lire' : '📖 اقرأ') : type === 'quiz' ? (language === 'fr' ? '🧠 Jouer' : '🧠 العب') : (language === 'fr' ? '▶️ Regarder' : '▶️ شاهد')}
                 </button>
               </div>
             </div>
@@ -155,7 +169,7 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Navigation with glass effect */}
+      {/* Navigation */}
       <nav className="glass sticky top-0 z-10 border-b border-white/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -167,17 +181,26 @@ export function UserDashboard() {
                 <h1 className="text-2xl font-extrabold gradient-text">
                   GamesApp
                 </h1>
-                <p className="text-xs text-gray-500">Fun for all ages!</p>
+                <p className="text-xs text-gray-500">{language === 'fr' ? 'Amusement pour tous!' : 'متعة للجميع!'}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
+              {/* Language Switcher */}
+              <button
+                onClick={toggleLanguage}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
+              >
+                <i className="fas fa-globe"></i>
+                {language === 'fr' ? '🇫🇷 FR' : '🇸🇦 AR'}
+              </button>
+
               {unlockedCount > 0 && (
                 <button 
                   onClick={() => setActiveTab('premium-unlock')}
                   className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 animate-pulse"
                 >
                   <span className="text-lg">⭐</span>
-                  {unlockedCount} Premium Unlocked
+                  {unlockedCount} {language === 'fr' ? 'Débloqués' : 'مفتوحة'}
                 </button>
               )}
               <div className="flex items-center gap-2 glass rounded-full px-3 py-1">
@@ -203,12 +226,15 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {/* Tabs with animations */}
+      {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-2 mb-6 flex-wrap animate-fadeInDown">
           {['stories', 'videos', 'quizzes', 'library'].map((tab, index) => {
             const icons = ['📚', '🎬', '🧩', '📂'];
-            const labels = ['Stories', 'Videos', 'Quizzes', 'My Library'];
+            const labels = {
+              fr: ['Stories', 'Videos', 'Quizzes', 'Ma Bibliothèque'],
+              ar: ['قصص', 'فيديوهات', 'اختبارات', 'مكتبتي']
+            };
             const colors = [
               'from-blue-500 to-blue-600',
               'from-red-500 to-pink-600',
@@ -223,7 +249,7 @@ export function UserDashboard() {
                 style={{ animationDelay: `${(index + 1) * 0.1}s` }}
               >
                 <span className="text-2xl mr-2">{icons[index]}</span>
-                {labels[index]}
+                {language === 'fr' ? labels.fr[index] : labels.ar[index]}
               </button>
             );
           })}
@@ -237,7 +263,7 @@ export function UserDashboard() {
               }`}
             >
               <span className="text-2xl mr-2">⭐</span>
-              Premium Unlock
+              {language === 'fr' ? 'Premium Débloqué' : 'المميز المفتوح'}
               <span className="ml-2 bg-white text-green-600 px-2 py-0.5 rounded-full text-xs font-bold">
                 {unlockedCount}
               </span>
@@ -245,7 +271,7 @@ export function UserDashboard() {
           )}
         </div>
 
-        {/* Content with animations */}
+        {/* Content */}
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-white/50 animate-fadeInUp">
           {activeTab === 'stories' && renderContent(stories, 'story', 'fa-book', 'bg-blue-100')}
           {activeTab === 'videos' && renderContent(videos, 'video', 'fa-video', 'bg-red-100')}
@@ -253,12 +279,12 @@ export function UserDashboard() {
           
           {activeTab === 'library' && (
             <div className="animate-fadeInUp">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">📂 My Library</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">{language === 'fr' ? '📂 Ma Bibliothèque' : '📂 مكتبتي'}</h2>
               {unlockedCount === 0 ? (
                 <div className="text-center py-12">
                   <i className="fas fa-folder-open text-6xl text-gray-300 mb-4 floating"></i>
-                  <p className="text-gray-500">Your library is empty</p>
-                  <p className="text-sm text-gray-400 mt-2">Request premium content to build your library!</p>
+                  <p className="text-gray-500">{language === 'fr' ? 'Votre bibliothèque est vide' : 'مكتبتك فارغة'}</p>
+                  <p className="text-sm text-gray-400 mt-2">{language === 'fr' ? 'Demandez du contenu premium pour construire votre bibliothèque!' : 'اطلب محتوى مميز لبناء مكتبتك!'}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -276,11 +302,11 @@ export function UserDashboard() {
                         </div>
                         <div>
                           <p className="font-bold text-gray-800">{item.name}</p>
-                          <p className="text-xs text-gray-500 capitalize">{item.type || 'Unknown'}</p>
+                          <p className="text-xs text-gray-500 capitalize">{item.type}</p>
                         </div>
                       </div>
                       <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                        <span className="badge-unlocked text-xs">✅ Unlocked</span>
+                        <span className="badge-unlocked text-xs">{language === 'fr' ? '✅ Débloqué' : '✅ مفتوح'}</span>
                         <span>• {new Date(item.grantedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -295,13 +321,13 @@ export function UserDashboard() {
             <div className="animate-fadeInUp">
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-3xl floating">⭐</span>
-                <h2 className="text-2xl font-bold gradient-text">Your Premium Unlocked Content</h2>
+                <h2 className="text-2xl font-bold gradient-text">{language === 'fr' ? 'Contenu Premium Débloqué' : 'المحتوى المميز المفتوح'}</h2>
               </div>
               {unlockedCount === 0 ? (
                 <div className="text-center py-12">
                   <i className="fas fa-star text-6xl text-gray-300 mb-4 floating"></i>
-                  <p className="text-gray-500">No premium content unlocked yet</p>
-                  <p className="text-sm text-gray-400 mt-2">Request premium content to unlock!</p>
+                  <p className="text-gray-500">{language === 'fr' ? 'Aucun contenu premium débloqué' : 'لا يوجد محتوى مميز مفتوح'}</p>
+                  <p className="text-sm text-gray-400 mt-2">{language === 'fr' ? 'Demandez du contenu premium pour débloquer!' : 'اطلب محتوى مميز لفتحه!'}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -310,6 +336,7 @@ export function UserDashboard() {
                     const videoItem = videos.find(v => v.id === item.id);
                     const quizItem = quizzes.find(q => q.id === item.id);
                     const fullItem = storyItem || videoItem || quizItem;
+                    const displayName = getDisplayName(fullItem || item);
                     
                     return (
                       <div 
@@ -324,15 +351,15 @@ export function UserDashboard() {
                             {item.type === 'quiz' && '🧩'}
                           </div>
                           <div className="flex-1">
-                            <p className="font-bold text-gray-800 text-lg">{item.name}</p>
+                            <p className="font-bold text-gray-800 text-lg">{displayName}</p>
                             <p className="text-xs text-gray-500 capitalize">{item.type}</p>
                           </div>
                         </div>
                         {fullItem && fullItem.imageUrl && (
-                          <img src={fullItem.imageUrl} alt={item.name} className="w-full h-32 object-cover rounded-xl mt-3 transition-transform duration-300 hover:scale-105" />
+                          <img src={fullItem.imageUrl} alt={displayName} className="w-full h-32 object-cover rounded-xl mt-3 transition-transform duration-300 hover:scale-105" />
                         )}
                         <div className="mt-3 flex items-center gap-3 text-xs">
-                          <span className="badge-unlocked">✅ Unlocked</span>
+                          <span className="badge-unlocked">{language === 'fr' ? '✅ Débloqué' : '✅ مفتوح'}</span>
                           <span className="text-gray-500">
                             {new Date(item.grantedAt).toLocaleDateString()}
                           </span>
@@ -344,9 +371,9 @@ export function UserDashboard() {
                           }}
                           className="mt-3 w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2 rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95 font-medium"
                         >
-                          {item.type === 'story' ? '📖 Read Story' : 
-                           item.type === 'video' ? '▶️ Watch Video' : 
-                           '🧠 Play Quiz'}
+                          {item.type === 'story' ? (language === 'fr' ? '📖 Lire' : '📖 اقرأ') : 
+                           item.type === 'video' ? (language === 'fr' ? '▶️ Regarder' : '▶️ شاهد') : 
+                           (language === 'fr' ? '🧠 Jouer' : '🧠 العب')}
                         </button>
                       </div>
                     );
@@ -367,19 +394,17 @@ export function UserDashboard() {
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 animate-scaleIn">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">{viewingStory.name}</h2>
-                <p className="text-gray-500">{viewingStory.nameArabic}</p>
+                <h2 className="text-2xl font-bold text-gray-800">{getDisplayName(viewingStory)}</h2>
               </div>
               <button onClick={() => setViewingStory(null)} className="text-gray-400 hover:text-gray-600 transition-all duration-300 hover:rotate-90">
                 <i className="fas fa-times text-2xl"></i>
               </button>
             </div>
             {viewingStory.imageUrl && (
-              <img src={viewingStory.imageUrl} alt={viewingStory.name} className="w-full h-64 object-cover rounded-2xl mb-4" />
+              <img src={viewingStory.imageUrl} alt={getDisplayName(viewingStory)} className="w-full h-64 object-cover rounded-2xl mb-4" />
             )}
             <div className="prose max-w-none">
-              <p className="text-gray-700 whitespace-pre-wrap text-lg">{viewingStory.content}</p>
-              <p className="text-gray-600 mt-4 whitespace-pre-wrap text-lg" dir="rtl">{viewingStory.contentArabic}</p>
+              <p className="text-gray-700 whitespace-pre-wrap text-lg">{getDisplayContent(viewingStory)}</p>
             </div>
           </div>
         </div>
@@ -387,7 +412,7 @@ export function UserDashboard() {
 
       {playingQuiz && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeInUp">
-          <QuizPlay quiz={playingQuiz} onClose={() => setPlayingQuiz(null)} />
+          <QuizPlay quiz={playingQuiz} onClose={() => setPlayingQuiz(null)} language={language} />
         </div>
       )}
     </div>

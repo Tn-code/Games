@@ -81,42 +81,23 @@ export function Dashboard() {
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100/50 shadow-xl p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              <button 
-                onClick={() => setActiveTab('premium-requests')} 
-                className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-center group"
-              >
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-all duration-300">
-                  <i className="fas fa-gem"></i>
-                </div>
-                <p className="text-sm font-medium text-gray-700 mt-2">Requests</p>
-              </button>
-              <button 
-                onClick={() => setActiveTab('create-story')} 
-                className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-center group"
-              >
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-all duration-300">
-                  <i className="fas fa-plus-circle"></i>
-                </div>
-                <p className="text-sm font-medium text-gray-700 mt-2">Add Story</p>
-              </button>
-              <button 
-                onClick={() => setActiveTab('create-video')} 
-                className="p-4 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-center group"
-              >
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-red-500 to-rose-500 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-all duration-300">
-                  <i className="fas fa-video"></i>
-                </div>
-                <p className="text-sm font-medium text-gray-700 mt-2">Add Video</p>
-              </button>
-              <button 
-                onClick={() => setActiveTab('create-quiz')} 
-                className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-center group"
-              >
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-all duration-300">
-                  <i className="fas fa-puzzle-piece"></i>
-                </div>
-                <p className="text-sm font-medium text-gray-700 mt-2">Add Quiz</p>
-              </button>
+              {[
+                { id: 'premium-requests', icon: 'fa-gem', label: 'Requests', color: 'from-purple-500 to-pink-500' },
+                { id: 'create-story', icon: 'fa-plus-circle', label: 'Add Story', color: 'from-emerald-500 to-green-500' },
+                { id: 'create-video', icon: 'fa-video', label: 'Add Video', color: 'from-red-500 to-rose-500' },
+                { id: 'create-quiz', icon: 'fa-puzzle-piece', label: 'Add Quiz', color: 'from-indigo-500 to-purple-500' },
+              ].map((action) => (
+                <button 
+                  key={action.id}
+                  onClick={() => setActiveTab(action.id)} 
+                  className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-center group"
+                >
+                  <div className={`w-12 h-12 mx-auto bg-gradient-to-br ${action.color} rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-all duration-300`}>
+                    <i className={`fas ${action.icon}`}></i>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 mt-2">{action.label}</p>
+                </button>
+              ))}
             </div>
           </div>
         </div>
