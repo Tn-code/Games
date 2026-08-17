@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { PremiumRequest } from './PremiumRequest';
+import { QuizPlay } from './QuizPlay';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -18,6 +19,7 @@ export function UserDashboard() {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [premiumType, setPremiumType] = useState('story');
   const [viewingStory, setViewingStory] = useState(null);
+  const [playingQuiz, setPlayingQuiz] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [unlockedItems, setUnlockedItems] = useState([]);
@@ -86,6 +88,8 @@ export function UserDashboard() {
     
     if (type === 'story') {
       setViewingStory(item);
+    } else if (type === 'quiz') {
+      setPlayingQuiz(item);
     }
   };
 
@@ -149,7 +153,7 @@ export function UserDashboard() {
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
-                  {isLocked ? '⭐ Request Premium' : isUnlocked ? '✅ Access Granted' : type === 'story' ? '📖 Read' : '▶️ Watch'}
+                  {isLocked ? '⭐ Request Premium' : isUnlocked ? '✅ Access Granted' : type === 'story' ? '📖 Read' : type === 'quiz' ? '🧠 Play Quiz' : '▶️ Watch'}
                 </button>
               </div>
             </div>
@@ -161,7 +165,7 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Navigation with Premium Unlock Badge */}
+      {/* Navigation */}
       <nav className="bg-white shadow-md border-b-4 border-purple-400 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -177,7 +181,6 @@ export function UserDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {/* Premium Unlock Badge */}
               {unlockedCount > 0 && (
                 <div className="relative">
                   <button 
@@ -261,7 +264,6 @@ export function UserDashboard() {
               </span>
             )}
           </button>
-          {/* Premium Unlock Tab - New! */}
           {unlockedCount > 0 && (
             <button
               onClick={() => setActiveTab('premium-unlock')}
@@ -273,11 +275,6 @@ export function UserDashboard() {
             >
               <span className="text-2xl mr-2">⭐</span>
               Premium Unlock
-              {unlockedCount > 0 && (
-                <span className="ml-2 bg-white text-green-600 px-2 py-0.5 rounded-full text-xs font-bold">
-                  {unlockedCount}
-                </span>
-              )}
             </button>
           )}
         </div>
@@ -323,7 +320,7 @@ export function UserDashboard() {
             </div>
           )}
 
-          {/* Premium Unlock Tab - Show all unlocked content */}
+          {/* Premium Unlock Tab */}
           {activeTab === 'premium-unlock' && (
             <div>
               <div className="flex items-center gap-3 mb-4">
@@ -337,56 +334,54 @@ export function UserDashboard() {
                   <p className="text-sm text-gray-400 mt-2">Request premium content to unlock!</p>
                 </div>
               ) : (
-                <div>
-                  <p className="text-sm text-gray-500 mb-4">
-                    You have <span className="font-bold text-green-600">{unlockedCount}</span> premium items unlocked!
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {unlockedContent.map((item) => {
-                      // Find the full item details from stories/videos/quizzes
-                      const storyItem = stories.find(s => s.id === item.id);
-                      const videoItem = videos.find(v => v.id === item.id);
-                      const quizItem = quizzes.find(q => q.id === item.id);
-                      const fullItem = storyItem || videoItem || quizItem;
-                      
-                      return (
-                        <div key={item.id} className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border-2 border-green-300 shadow-md">
-                          <div className="flex items-center gap-3">
-                            <div className="w-14 h-14 bg-green-200 rounded-xl flex items-center justify-center text-3xl">
-                              {item.type === 'story' && '📚'}
-                              {item.type === 'video' && '🎬'}
-                              {item.type === 'quiz' && '🧩'}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-bold text-gray-800 text-lg">{item.name}</p>
-                              <p className="text-xs text-gray-500 capitalize">{item.type}</p>
-                            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {unlockedContent.map((item) => {
+                    const storyItem = stories.find(s => s.id === item.id);
+                    const videoItem = videos.find(v => v.id === item.id);
+                    const quizItem = quizzes.find(q => q.id === item.id);
+                    const fullItem = storyItem || videoItem || quizItem;
+                    
+                    return (
+                      <div key={item.id} className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border-2 border-green-300 shadow-md">
+                        <div className="flex items-center gap-3">
+                          <div className="w-14 h-14 bg-green-200 rounded-xl flex items-center justify-center text-3xl">
+                            {item.type === 'story' && '📚'}
+                            {item.type === 'video' && '🎬'}
+                            {item.type === 'quiz' && '🧩'}
                           </div>
-                          {fullItem && fullItem.imageUrl && (
-                            <img src={fullItem.imageUrl} alt={item.name} className="w-full h-32 object-cover rounded-xl mt-3" />
-                          )}
-                          <div className="mt-3 flex items-center gap-3 text-xs">
-                            <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                              ✅ Unlocked
-                            </span>
-                            <span className="text-gray-500">
-                              {new Date(item.grantedAt).toLocaleDateString()}
-                            </span>
+                          <div className="flex-1">
+                            <p className="font-bold text-gray-800 text-lg">{item.name}</p>
+                            <p className="text-xs text-gray-500 capitalize">{item.type}</p>
                           </div>
-                          <button
-                            onClick={() => {
-                              if (item.type === 'story' && fullItem) {
-                                setViewingStory(fullItem);
-                              }
-                            }}
-                            className="mt-3 w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-all font-medium"
-                          >
-                            {item.type === 'story' ? '📖 Read Story' : item.type === 'video' ? '▶️ Watch Video' : '🧠 Start Quiz'}
-                          </button>
                         </div>
-                      );
-                    })}
-                  </div>
+                        {fullItem && fullItem.imageUrl && (
+                          <img src={fullItem.imageUrl} alt={item.name} className="w-full h-32 object-cover rounded-xl mt-3" />
+                        )}
+                        <div className="mt-3 flex items-center gap-3 text-xs">
+                          <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            ✅ Unlocked
+                          </span>
+                          <span className="text-gray-500">
+                            {new Date(item.grantedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (item.type === 'story' && fullItem) {
+                              setViewingStory(fullItem);
+                            } else if (item.type === 'quiz' && fullItem) {
+                              setPlayingQuiz(fullItem);
+                            }
+                          }}
+                          className="mt-3 w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-all font-medium"
+                        >
+                          {item.type === 'story' ? '📖 Read Story' : 
+                           item.type === 'video' ? '▶️ Watch Video' : 
+                           '🧠 Play Quiz'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -424,6 +419,13 @@ export function UserDashboard() {
               <p className="text-gray-600 mt-4 whitespace-pre-wrap text-lg" dir="rtl">{viewingStory.contentArabic}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Quiz Play Modal */}
+      {playingQuiz && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <QuizPlay quiz={playingQuiz} onClose={() => setPlayingQuiz(null)} />
         </div>
       )}
     </div>

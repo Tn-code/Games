@@ -119,9 +119,9 @@ export function QuizPlay({ quiz, onClose }) {
           <p className="text-sm text-gray-500">{quiz.title}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="px-4 py-2 bg-blue-100 rounded-lg">
+          <div className="px-4 py-2 bg-purple-100 rounded-lg">
             <i className="fas fa-star text-yellow-500 mr-2"></i>
-            <span className="font-bold text-blue-700">{score} pts</span>
+            <span className="font-bold text-purple-700">{score} pts</span>
           </div>
         </div>
       </div>
@@ -129,7 +129,7 @@ export function QuizPlay({ quiz, onClose }) {
       {/* Progress bar */}
       <div className="w-full h-2 bg-gray-200 rounded-full mb-6">
         <div 
-          className="h-full bg-blue-600 rounded-full transition-all duration-300"
+          className="h-full bg-purple-600 rounded-full transition-all duration-300"
           style={{ width: `${((currentQuestion + 1) / quiz.questions.length) * 100}%` }}
         ></div>
       </div>
@@ -137,7 +137,9 @@ export function QuizPlay({ quiz, onClose }) {
       {/* Question */}
       <div className="mb-6">
         <p className="text-xl font-medium text-gray-800">{question.question}</p>
-        <p className="text-gray-500 text-sm mt-1" dir="rtl">{question.questionArabic}</p>
+        {question.questionArabic && (
+          <p className="text-gray-500 text-sm mt-1" dir="rtl">{question.questionArabic}</p>
+        )}
       </div>
 
       {/* Options */}
@@ -149,7 +151,7 @@ export function QuizPlay({ quiz, onClose }) {
             disabled={selectedAnswer !== null}
             className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
               selectedAnswer === null
-                ? 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'
+                ? 'border-gray-200 hover:border-purple-400 hover:bg-purple-50'
                 : selectedAnswer === index
                 ? question.correctAnswer === index
                   ? 'border-green-500 bg-green-50'
@@ -187,7 +189,7 @@ export function QuizPlay({ quiz, onClose }) {
           disabled={selectedAnswer === null}
           className={`px-6 py-3 rounded-xl font-medium transition-all ${
             selectedAnswer !== null
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-purple-600 text-white hover:bg-purple-700'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
