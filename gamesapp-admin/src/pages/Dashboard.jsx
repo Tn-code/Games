@@ -14,7 +14,7 @@ import { UserManagement } from './UserManagement';
 import { SyncUsers } from './SyncUsers';
 import { UserContentManager } from './UserContentManager';
 import { AdminPremiumRequests } from './AdminPremiumRequests';
-import { FixUnlock } from './FixUnlock';
+import { ForceUnlockNow } from './ForceUnlockNow';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -51,7 +51,7 @@ export function Dashboard() {
   const renderContent = () => {
     switch(activeTab) {
       case 'premium-requests': return <AdminPremiumRequests />;
-      case 'fix-unlock': return <FixUnlock />;
+      case 'force-unlock-now': return <ForceUnlockNow />;
       case 'create-story': return <CreateStory />;
       case 'stories': return <StoriesList />;
       case 'videos': return <VideoStoriesList />;
@@ -93,9 +93,9 @@ export function Dashboard() {
                 <i className="fas fa-gem text-2xl text-purple-600 mb-2"></i>
                 <p className="text-sm font-medium text-gray-700">Premium Requests</p>
               </button>
-              <button onClick={() => setActiveTab('fix-unlock')} className="p-4 bg-blue-50 rounded-xl hover:shadow-lg transition-all text-center">
-                <i className="fas fa-unlock text-2xl text-blue-600 mb-2"></i>
-                <p className="text-sm font-medium text-gray-700">Fix Unlock</p>
+              <button onClick={() => setActiveTab('force-unlock-now')} className="p-4 bg-red-50 rounded-xl hover:shadow-lg transition-all text-center">
+                <i className="fas fa-bolt text-2xl text-red-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Force Unlock</p>
               </button>
             </div>
           </div>
