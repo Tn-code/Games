@@ -4,6 +4,7 @@ import { useFirestore } from '../hooks/useFirestore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { PremiumRequest } from './PremiumRequest';
 import { QuizPlay } from './QuizPlay';
+import { VideoPlayer } from '../components/VideoPlayer';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -20,10 +21,11 @@ export function UserDashboard() {
   const [premiumType, setPremiumType] = useState('story');
   const [viewingStory, setViewingStory] = useState(null);
   const [playingQuiz, setPlayingQuiz] = useState(null);
+  const [watchingVideo, setWatchingVideo] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [unlockedItems, setUnlockedItems] = useState([]);
-  const [language, setLanguage] = useState('fr'); // 'fr' or 'ar'
+  const [language, setLanguage] = useState('fr');
 
   // Real-time listener for user data
   useEffect(() => {
@@ -77,6 +79,7 @@ export function UserDashboard() {
     }
     if (type === 'story') setViewingStory(item);
     else if (type === 'quiz') setPlayingQuiz(item);
+    else if (type === 'video') setWatchingVideo(item);
   };
 
   const toggleLanguage = () => {
@@ -111,7 +114,7 @@ export function UserDashboard() {
           return (
             <div 
               key={item.id} 
-              className={`border rounded-2xl overflow-hidden hover-lift animate-fadeInUp delay-${(index % 5 + 1) * 100}`}
+              className={`border rounded-2xl overflow-hidden hover-lift animate-fadeInUp`}
               style={{ animationDelay: `${(index % 5 + 1) * 0.1}s` }}
             >
               <div className="relative group">
@@ -121,6 +124,10 @@ export function UserDashboard() {
                     alt={displayName} 
                     className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110" 
                   />
+                ) : type === 'video' ? (
+                  <div className="w-full h-48 bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-110">
+                    <i className="fas fa-play-circle text-white"></i>
+                  </div>
                 ) : (
                   <div className={`w-full h-48 ${color} flex items-center justify-center text-6xl transition-transform duration-500 group-hover:scale-110`}>
                     <i className={`fas ${icon}`}></i>
@@ -154,10 +161,16 @@ export function UserDashboard() {
                       ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-600/30'
                       : isUnlocked
                       ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:shadow-lg hover:shadow-green-500/30'
+                      : type === 'video'
+                      ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:shadow-lg hover:shadow-red-500/30'
                       : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-lg hover:shadow-blue-500/30'
                   }`}
                 >
-                  {isLocked ? (language === 'fr' ? '⭐ Demander Premium' : '⭐ طلب مميز') : isUnlocked ? (language === 'fr' ? '✅ Accès Accordé' : '✅ تم الفتح') : type === 'story' ? (language === 'fr' ? '📖 Lire' : '📖 اقرأ') : type === 'quiz' ? (language === 'fr' ? '🧠 Jouer' : '🧠 العب') : (language === 'fr' ? '▶️ Regarder' : '▶️ شاهد')}
+                  {isLocked ? (language === 'fr' ? '⭐ Demander Premium' : '⭐ طلب مميز') : 
+                   isUnlocked ? (language === 'fr' ? '✅ Accès Accordé' : '✅ تم الفتح') : 
+                   type === 'story' ? (language === 'fr' ? '📖 Lire' : '📖 اقرأ') : 
+                   type === 'quiz' ? (language === 'fr' ? '🧠 Jouer' : '🧠 العب') : 
+                   (language === 'fr' ? '▶️ Regarder' : '▶️ شاهد')}
                 </button>
               </div>
             </div>
@@ -185,7 +198,6 @@ export function UserDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {/* Language Switcher */}
               <button
                 onClick={toggleLanguage}
                 className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
@@ -288,29 +300,36 @@ export function UserDashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {unlockedContent.map((item, index) => (
-                    <div 
-                      key={item.id} 
-                      className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border-2 border-green-200 hover-lift animate-fadeInUp"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center text-2xl floating">
-                          {item.type === 'story' && '📚'}
-                          {item.type === 'video' && '🎬'}
-                          {item.type === 'quiz' && '🧩'}
+                  {unlockedContent.map((item, index) => {
+                    const fullItem = stories.find(s => s.id === item.id) || 
+                                    videos.find(v => v.id === item.id) || 
+                                    quizzes.find(q => q.id === item.id);
+                    const displayName = getDisplayName(fullItem || item);
+                    
+                    return (
+                      <div 
+                        key={item.id} 
+                        className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border-2 border-green-200 hover-lift animate-fadeInUp"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center text-2xl floating">
+                            {item.type === 'story' && '📚'}
+                            {item.type === 'video' && '🎬'}
+                            {item.type === 'quiz' && '🧩'}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-800">{displayName}</p>
+                            <p className="text-xs text-gray-500 capitalize">{item.type}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-800">{item.name}</p>
-                          <p className="text-xs text-gray-500 capitalize">{item.type}</p>
+                        <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                          <span className="badge-unlocked text-xs">{language === 'fr' ? '✅ Débloqué' : '✅ مفتوح'}</span>
+                          <span>• {new Date(item.grantedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                        <span className="badge-unlocked text-xs">{language === 'fr' ? '✅ Débloqué' : '✅ مفتوح'}</span>
-                        <span>• {new Date(item.grantedAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -368,6 +387,7 @@ export function UserDashboard() {
                           onClick={() => {
                             if (item.type === 'story' && fullItem) setViewingStory(fullItem);
                             else if (item.type === 'quiz' && fullItem) setPlayingQuiz(fullItem);
+                            else if (item.type === 'video' && fullItem) setWatchingVideo(fullItem);
                           }}
                           className="mt-3 w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2 rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95 font-medium"
                         >
@@ -389,6 +409,12 @@ export function UserDashboard() {
         <PremiumRequest item={selectedItem} type={premiumType} onClose={handleModalClose} />
       )}
 
+      {/* Video Player Modal */}
+      {watchingVideo && (
+        <VideoPlayer video={watchingVideo} onClose={() => setWatchingVideo(null)} language={language} />
+      )}
+
+      {/* Story Viewer Modal */}
       {viewingStory && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeInUp">
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 animate-scaleIn">
