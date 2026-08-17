@@ -1,0 +1,10 @@
+name = "gamesapp"
+main = "src/index.html"
+
+[build]
+command = "cd gamesapp-admin && npm run build"
+cwd = "/"
+
+[build.upload]
+format = "directory"
+dir = "gamesapp-admin/dist"
