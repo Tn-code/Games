@@ -430,3 +430,76 @@ body {
     @apply grid-cols-1;
   }
 }
+
+/* ============================================
+   SIDEBAR ANIMATIONS
+   ============================================ */
+
+/* Sidebar item hover glow */
+.sidebar-item {
+  @apply relative overflow-hidden cursor-pointer rounded-xl transition-all duration-300;
+}
+
+.sidebar-item::after {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 transition-opacity duration-300;
+}
+
+.sidebar-item:hover::after {
+  @apply opacity-100;
+}
+
+.sidebar-item.active {
+  @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-600/30;
+}
+
+.sidebar-item.active .icon-wrapper {
+  @apply bg-white/20 text-white;
+}
+
+.sidebar-item .icon-wrapper {
+  @apply transition-all duration-300;
+}
+
+.sidebar-item:hover .icon-wrapper {
+  @apply scale-110 rotate-3;
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+  @apply fixed top-4 left-4 z-50 bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95;
+}
+
+/* Sidebar overlay */
+.sidebar-overlay {
+  @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300;
+}
+
+/* Sidebar transition */
+.sidebar-transition {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Sidebar open/close */
+.sidebar-open {
+  @apply left-0;
+}
+
+.sidebar-closed {
+  @apply -left-64;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .sidebar-item {
+    @apply px-2 py-1.5;
+  }
+  
+  .sidebar-item .icon-wrapper {
+    @apply w-7 h-7 text-sm;
+  }
+  
+  .sidebar-item span {
+    @apply text-sm;
+  }
+}
