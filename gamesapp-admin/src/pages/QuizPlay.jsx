@@ -10,8 +10,8 @@ export function QuizPlay({ quiz, onClose }) {
   if (!quiz || !quiz.questions || quiz.questions.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto text-center">
-        <p className="text-gray-500">No questions available for this quiz</p>
-        <button onClick={onClose} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-xl">Close</button>
+        <p className="text-gray-500">No questions available</p>
+        <button onClick={onClose} className="mt-4 btn-primary">Close</button>
       </div>
     );
   }
@@ -21,7 +21,7 @@ export function QuizPlay({ quiz, onClose }) {
     return (
       <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto text-center">
         <p className="text-gray-500">Question not found</p>
-        <button onClick={onClose} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-xl">Close</button>
+        <button onClick={onClose} className="mt-4 btn-primary">Close</button>
       </div>
     );
   }
@@ -63,42 +63,38 @@ export function QuizPlay({ quiz, onClose }) {
     const percentage = Math.round((correctCount / totalQuestions) * 100);
     
     return (
-      <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto">
+      <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto animate-scaleIn">
         <div className="text-center">
           <div className="mb-6">
             {percentage >= 70 ? (
-              <i className="fas fa-trophy text-6xl text-yellow-500"></i>
+              <div className="text-6xl floating">🏆</div>
             ) : percentage >= 40 ? (
-              <i className="fas fa-thumbs-up text-6xl text-blue-500"></i>
+              <div className="text-6xl floating">👍</div>
             ) : (
-              <i className="fas fa-book text-6xl text-gray-400"></i>
+              <div className="text-6xl floating">📚</div>
             )}
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">Quiz Complete! 🎉</h3>
-          <p className="text-gray-500 mt-2">You scored {score} points</p>
-          <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-            <div className="flex justify-around">
-              <div>
-                <p className="text-2xl font-bold text-green-600">{correctCount}</p>
-                <p className="text-sm text-gray-500">Correct</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-600">{totalQuestions - correctCount}</p>
-                <p className="text-sm text-gray-500">Wrong</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-600">{percentage}%</p>
-                <p className="text-sm text-gray-500">Score</p>
-              </div>
+          <h3 className="text-2xl font-bold text-gray-800 animate-fadeInUp">Quiz Complete! 🎉</h3>
+          <p className="text-gray-500 mt-2 animate-fadeInUp delay-200">You scored <span className="text-2xl font-bold text-purple-600">{score}</span> points</p>
+          <div className="mt-4 p-4 bg-gray-50 rounded-xl grid grid-cols-3 gap-4 animate-fadeInUp delay-300">
+            <div>
+              <p className="text-2xl font-bold text-green-600">{correctCount}</p>
+              <p className="text-sm text-gray-500">Correct</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-red-600">{totalQuestions - correctCount}</p>
+              <p className="text-sm text-gray-500">Wrong</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-blue-600">{percentage}%</p>
+              <p className="text-sm text-gray-500">Score</p>
             </div>
           </div>
           <div className="mt-6 flex gap-3 justify-center">
-            <button onClick={handleRestart} className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium">
-              <i className="fas fa-redo mr-2"></i>Try Again
+            <button onClick={handleRestart} className="btn-primary flex items-center gap-2">
+              <i className="fas fa-redo"></i>Try Again
             </button>
-            <button onClick={onClose} className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-medium">
-              Close
-            </button>
+            <button onClick={onClose} className="btn-secondary">Close</button>
           </div>
         </div>
       </div>
@@ -109,7 +105,7 @@ export function QuizPlay({ quiz, onClose }) {
   const optionsArabic = question.optionsArabic || [];
 
   return (
-    <div className="bg-white rounded-2xl p-6 max-w-2xl mx-auto">
+    <div className="bg-white rounded-2xl p-6 max-w-2xl mx-auto animate-scaleIn">
       {/* Progress */}
       <div className="flex justify-between items-center mb-4">
         <div>
@@ -118,24 +114,22 @@ export function QuizPlay({ quiz, onClose }) {
           </h3>
           <p className="text-sm text-gray-500">{quiz.title}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-2 bg-purple-100 rounded-lg">
-            <i className="fas fa-star text-yellow-500 mr-2"></i>
-            <span className="font-bold text-purple-700">{score} pts</span>
-          </div>
+        <div className="px-4 py-2 bg-purple-100 rounded-lg animate-pulse">
+          <i className="fas fa-star text-yellow-500 mr-2"></i>
+          <span className="font-bold text-purple-700">{score} pts</span>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-2 bg-gray-200 rounded-full mb-6">
+      <div className="w-full h-3 bg-gray-200 rounded-full mb-6 overflow-hidden">
         <div 
-          className="h-full bg-purple-600 rounded-full transition-all duration-300"
+          className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-500"
           style={{ width: `${((currentQuestion + 1) / quiz.questions.length) * 100}%` }}
         ></div>
       </div>
 
       {/* Question */}
-      <div className="mb-6">
+      <div className="mb-6 animate-fadeInUp">
         <p className="text-xl font-medium text-gray-800">{question.question}</p>
         {question.questionArabic && (
           <p className="text-gray-500 text-sm mt-1" dir="rtl">{question.questionArabic}</p>
@@ -149,20 +143,30 @@ export function QuizPlay({ quiz, onClose }) {
             key={index}
             onClick={() => handleAnswer(index)}
             disabled={selectedAnswer !== null}
-            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 ${
               selectedAnswer === null
-                ? 'border-gray-200 hover:border-purple-400 hover:bg-purple-50'
+                ? 'border-gray-200 hover:border-purple-400 hover:bg-purple-50 hover:shadow-lg'
                 : selectedAnswer === index
                 ? question.correctAnswer === index
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-red-500 bg-red-50'
+                  ? 'border-green-500 bg-green-50 shadow-lg shadow-green-200'
+                  : 'border-red-500 bg-red-50 shadow-lg shadow-red-200'
                 : question.correctAnswer === index && selectedAnswer !== null
-                ? 'border-green-500 bg-green-50'
+                ? 'border-green-500 bg-green-50 shadow-lg shadow-green-200'
                 : 'border-gray-200 opacity-50'
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 font-medium">
+              <span className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-all duration-300 ${
+                selectedAnswer === null
+                  ? 'bg-gray-100 text-gray-600'
+                  : selectedAnswer === index && question.correctAnswer === index
+                  ? 'bg-green-500 text-white'
+                  : selectedAnswer === index && question.correctAnswer !== index
+                  ? 'bg-red-500 text-white'
+                  : question.correctAnswer === index && selectedAnswer !== null
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-400'
+              }`}>
                 {String.fromCharCode(65 + index)}
               </span>
               <div className="flex-1">
@@ -172,10 +176,10 @@ export function QuizPlay({ quiz, onClose }) {
                 )}
               </div>
               {selectedAnswer !== null && index === question.correctAnswer && (
-                <i className="fas fa-check-circle text-green-500 text-xl"></i>
+                <i className="fas fa-check-circle text-green-500 text-xl animate-bounceIn"></i>
               )}
               {selectedAnswer === index && index !== question.correctAnswer && (
-                <i className="fas fa-times-circle text-red-500 text-xl"></i>
+                <i className="fas fa-times-circle text-red-500 text-xl animate-bounceIn"></i>
               )}
             </div>
           </button>
@@ -187,9 +191,9 @@ export function QuizPlay({ quiz, onClose }) {
         <button
           onClick={handleNext}
           disabled={selectedAnswer === null}
-          className={`px-6 py-3 rounded-xl font-medium transition-all ${
+          className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 transform ${
             selectedAnswer !== null
-              ? 'bg-purple-600 text-white hover:bg-purple-700'
+              ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-600/30 hover:scale-105 active:scale-95'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
