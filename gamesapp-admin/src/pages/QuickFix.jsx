@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFirestore } from '../hooks/useFirestore';
 import { db } from '../firebase/config';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function QuickFix() {
@@ -9,10 +9,12 @@ export function QuickFix() {
   const { data: requests, loading: requestsLoading } = useFirestore('premiumRequests');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [processing, setProcessing] = useState(false);
+  const [results, setResults] = useState([]);
 
   const fixAllApproved = async () => {
     setProcessing(true);
     setMessage({ type: '', text: '' });
+    setResults([]);
 
     try {
       console.log('🔧 Starting fix...');
@@ -23,6 +25,8 @@ export function QuickFix() {
       
       let count = 0;
       let skipped = 0;
+      let noUser = 0;
+      const resultItems = [];
 
       for (const request of approvedRequests) {
         console.log(`\n📝 Processing: ${request.itemName} for ${request.userEmail}`);
@@ -51,21 +55,26 @@ export function QuickFix() {
               unlockedContent: [...unlocked, newContent]
             });
             count++;
+            resultItems.push(`✅ ${request.itemName} → ${user.email}`);
             console.log(`✅ Added: ${request.itemName} to ${user.email}`);
           } else {
             skipped++;
+            resultItems.push(`⏭️ ${request.itemName} → ${user.email} (already unlocked)`);
             console.log(`ℹ️ Already unlocked: ${request.itemName}`);
           }
         } else {
+          noUser++;
+          resultItems.push(`❌ ${request.itemName} → User not found (${request.userId})`);
           console.log(`❌ User not found: ${request.userId}`);
         }
       }
 
       await fetchData();
+      setResults(resultItems);
       
       setMessage({ 
         type: 'success', 
-        text: `✅ Fixed ${count} items for users! (${skipped} already unlocked)` 
+        text: `✅ Fixed ${count} items! (${skipped} already unlocked, ${noUser} users not found)` 
       });
     } catch (error) {
       console.error('❌ Error:', error);
@@ -132,6 +141,19 @@ export function QuickFix() {
               </>
             )}
           </button>
+
+          {results.length > 0 && (
+            <div className="mt-6 max-h-60 overflow-y-auto">
+              <h4 className="font-semibold text-gray-700 mb-2">Results:</h4>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-1">
+                {results.map((result, index) => (
+                  <div key={index} className="text-sm font-mono">
+                    {result}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
             <p className="text-sm text-yellow-800">
