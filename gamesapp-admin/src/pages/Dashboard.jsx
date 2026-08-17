@@ -11,10 +11,8 @@ import { CreateVideoStory } from './CreateVideoStory';
 import { QuizzesList } from './QuizzesList';
 import { CreateQuiz } from './CreateQuiz';
 import { UserManagement } from './UserManagement';
-import { SyncUsers } from './SyncUsers';
 import { UserContentManager } from './UserContentManager';
 import { AdminPremiumRequests } from './AdminPremiumRequests';
-import { ForceUnlockNow } from './ForceUnlockNow';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -33,7 +31,6 @@ export function Dashboard() {
   }
 
   const pendingRequests = requests.filter(r => r.status === 'pending').length;
-  const approvedRequests = requests.filter(r => r.status === 'approved').length;
 
   const stats = {
     games: games.length,
@@ -44,14 +41,12 @@ export function Dashboard() {
     totalQuestions: quizzes.reduce((acc, q) => acc + (q.totalQuestions || 0), 0),
     videos: videos.length,
     premiumVideos: videos.filter(v => v.type === 'premium').length,
-    pendingRequests: pendingRequests,
-    approvedRequests: approvedRequests
+    pendingRequests: pendingRequests
   };
 
   const renderContent = () => {
     switch(activeTab) {
       case 'premium-requests': return <AdminPremiumRequests />;
-      case 'force-unlock-now': return <ForceUnlockNow />;
       case 'create-story': return <CreateStory />;
       case 'stories': return <StoriesList />;
       case 'videos': return <VideoStoriesList />;
@@ -60,42 +55,40 @@ export function Dashboard() {
       case 'quizzes': return <QuizzesList />;
       case 'users': return <UserManagement />;
       case 'user-content': return <UserContentManager />;
-      case 'sync-users': return <SyncUsers />;
       default: return (
         <div className="flex-1 p-8">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
-                Dashboard
-              </h2>
+              <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
               <p className="text-gray-500 text-sm">Welcome back, {user?.email || 'Admin'}!</p>
             </div>
-            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-gray-700">
+            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
               <i className="fas fa-sign-out-alt"></i>
               <span className="font-medium">Logout</span>
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard icon="gem" title="Pending" value={stats.pendingRequests} color="purple" subtitle="Need approval" />
-            <StatsCard icon="check-circle" title="Approved" value={stats.approvedRequests} color="green" subtitle="Already approved" />
+            <StatsCard icon="gem" title="Pending Requests" value={stats.pendingRequests} color="purple" />
             <StatsCard icon="book" title="Stories" value={stats.stories} color="blue" subtitle={`${stats.premiumStories} premium`} />
             <StatsCard icon="video" title="Videos" value={stats.videos} color="red" subtitle={`${stats.premiumVideos} premium`} />
+            <StatsCard icon="users" title="Users" value={stats.users} color="green" />
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              <i className="fas fa-rocket text-purple-600 mr-2"></i>
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setActiveTab('premium-requests')} className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl hover:shadow-lg transition-all text-center">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <button onClick={() => setActiveTab('premium-requests')} className="p-4 bg-purple-50 rounded-xl hover:shadow-lg transition-all text-center">
                 <i className="fas fa-gem text-2xl text-purple-600 mb-2"></i>
-                <p className="text-sm font-medium text-gray-700">Premium Requests</p>
+                <p className="text-sm font-medium text-gray-700">Requests</p>
               </button>
-              <button onClick={() => setActiveTab('force-unlock-now')} className="p-4 bg-red-50 rounded-xl hover:shadow-lg transition-all text-center">
-                <i className="fas fa-bolt text-2xl text-red-600 mb-2"></i>
-                <p className="text-sm font-medium text-gray-700">Force Unlock</p>
+              <button onClick={() => setActiveTab('create-story')} className="p-4 bg-blue-50 rounded-xl hover:shadow-lg transition-all text-center">
+                <i className="fas fa-plus-circle text-2xl text-blue-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Add Story</p>
+              </button>
+              <button onClick={() => setActiveTab('create-video')} className="p-4 bg-red-50 rounded-xl hover:shadow-lg transition-all text-center">
+                <i className="fas fa-video text-2xl text-red-600 mb-2"></i>
+                <p className="text-sm font-medium text-gray-700">Add Video</p>
               </button>
             </div>
           </div>
@@ -105,7 +98,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       {renderContent()}
     </div>

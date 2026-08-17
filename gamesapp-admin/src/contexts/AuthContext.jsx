@@ -26,7 +26,6 @@ export function AuthProvider({ children }) {
       if (user) {
         const isAdminUser = user.email === ADMIN_EMAIL;
         setIsAdmin(isAdminUser);
-        // ALWAYS save user to Firestore when they sign in
         await saveUserToFirestore(user);
         setUser(user);
       } else {
@@ -53,30 +52,34 @@ export function AuthProvider({ children }) {
         isAdmin: user.email === ADMIN_EMAIL,
         providers: user.providerData?.map(p => p.providerId) || ['password'],
         purchases: [],
-        unlockedContent: []
+        unlockedContent: [] // <-- This is the key field
       };
       
       if (!userDoc.exists()) {
-        // Create new user document
-        await setDoc(userRef, {
-          ...userData,
-          createdAt: serverTimestamp()
-        });
-        console.log('✅ New user saved to Firestore:', user.email);
+        await setDoc(userRef, userData);
+        console.log('✅ New user created with unlockedContent: []');
       } else {
-        // Update existing user
-        await setDoc(userRef, {
-          ...userData,
-          lastLogin: serverTimestamp()
-        }, { merge: true });
-        console.log('🔄 User updated in Firestore:', user.email);
+        // Update existing user, but ensure unlockedContent exists
+        const existingData = userDoc.data();
+        if (!existingData.unlockedContent) {
+          await setDoc(userRef, {
+            ...existingData,
+            unlockedContent: [],
+            lastLogin: new Date().toISOString()
+          }, { merge: true });
+          console.log('✅ Added unlockedContent to existing user');
+        } else {
+          await setDoc(userRef, {
+            ...existingData,
+            lastLogin: new Date().toISOString()
+          }, { merge: true });
+        }
       }
     } catch (error) {
-      console.error('Error saving user to Firestore:', error);
+      console.error('Error saving user:', error);
     }
   };
 
-  // Login with email/password
   const login = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -87,7 +90,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Register with email/password
   const register = async (email, password, displayName) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -100,7 +102,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Login with Google
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -113,7 +114,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Logout
   const logout = async () => {
     try {
       await signOut(auth);

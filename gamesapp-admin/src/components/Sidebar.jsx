@@ -4,7 +4,6 @@ export function Sidebar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
     { id: 'premium-requests', icon: 'fa-gem', label: 'Premium Requests' },
-    { id: 'force-unlock-now', icon: 'fa-bolt', label: 'Force Unlock' },
     { id: 'stories', icon: 'fa-book', label: 'Stories' },
     { id: 'create-story', icon: 'fa-plus-circle', label: 'Create Story' },
     { id: 'videos', icon: 'fa-video', label: 'Video Stories' },
@@ -13,7 +12,6 @@ export function Sidebar({ activeTab, setActiveTab }) {
     { id: 'create-quiz', icon: 'fa-plus-circle', label: 'Create Quiz' },
     { id: 'users', icon: 'fa-users', label: 'User Management' },
     { id: 'user-content', icon: 'fa-user-lock', label: 'User Content' },
-    { id: 'sync-users', icon: 'fa-sync', label: 'Sync Users' },
   ];
 
   return (
