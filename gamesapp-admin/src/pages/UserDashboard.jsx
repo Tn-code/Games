@@ -4,7 +4,7 @@ import { useFirestore } from '../hooks/useFirestore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { PremiumRequest } from './PremiumRequest';
 import { db } from '../firebase/config';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export function UserDashboard() {
   const { user, logout } = useAuth();
@@ -20,75 +20,28 @@ export function UserDashboard() {
   const [viewingStory, setViewingStory] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
-  const [isListening, setIsListening] = useState(false);
-  const [unlockedIds, setUnlockedIds] = useState([]);
+  const [unlockedItems, setUnlockedItems] = useState([]);
 
-  // Real-time listener for current user
+  // Real-time listener for user data
   useEffect(() => {
-    if (!user || isListening) return;
+    if (!user) return;
 
-    console.log('🔄 Setting up real-time listener for user:', user.uid);
-    setIsListening(true);
-
+    console.log('🔄 Listening for user updates...');
     const userRef = doc(db, 'users', user.uid);
     const unsubscribe = onSnapshot(userRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
-        console.log('📊 User data received:', data);
-        console.log('📊 Unlocked content:', data.unlockedContent || []);
-        
+        console.log('📊 User data updated');
         setCurrentUserData(data);
         const unlocked = data.unlockedContent || [];
-        const count = unlocked.length;
-        setUnlockedCount(count);
-        
-        // Extract IDs for quick lookup
-        const ids = unlocked.map(item => item.id);
-        setUnlockedIds(ids);
-        
-        console.log(`✅ User has ${count} unlocked items:`, ids);
-        console.log('🎉 Unlocked content details:', unlocked);
-      } else {
-        console.log('❌ User document not found in Firestore');
+        setUnlockedCount(unlocked.length);
+        setUnlockedItems(unlocked);
+        console.log(`✅ ${unlocked.length} unlocked items`);
       }
-    }, (error) => {
-      console.error('❌ Error listening to user updates:', error);
     });
 
-    return () => {
-      console.log('🛑 Stopping real-time listener');
-      unsubscribe();
-      setIsListening(false);
-    };
+    return () => unsubscribe();
   }, [user]);
-
-  // Also check for updates periodically
-  useEffect(() => {
-    if (!user) return;
-    
-    const interval = setInterval(async () => {
-      try {
-        const userRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(userRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const unlocked = data.unlockedContent || [];
-          const count = unlocked.length;
-          if (count !== unlockedCount) {
-            console.log('🔄 Detected change in unlocked content:', count);
-            setUnlockedCount(count);
-            setCurrentUserData(data);
-            const ids = unlocked.map(item => item.id);
-            setUnlockedIds(ids);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking user data:', error);
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [user, unlockedCount]);
 
   // Initial data fetch
   useEffect(() => {
@@ -101,27 +54,14 @@ export function UserDashboard() {
     return <LoadingSpinner />;
   }
 
-  // Get user from users list (fallback)
+  // Get user data
   const userFromList = users.find(u => u.uid === user?.uid);
   const userData = currentUserData || userFromList;
+  const unlockedContent = userData?.unlockedContent || [];
 
-  // Check if user has access to content - improved to check by ID
-  const hasAccess = (itemId, type) => {
-    const unlocked = userData?.unlockedContent || [];
-    // Check by ID and type
-    const found = unlocked.some(item => {
-      // If type is provided, check both id and type
-      if (type) {
-        return item.id === itemId && item.type === type;
-      }
-      // If no type, just check ID (for backward compatibility)
-      return item.id === itemId;
-    });
-    
-    // Also check the unlockedIds list
-    const foundById = unlockedIds.includes(itemId);
-    
-    return found || foundById;
+  // Check if user has access
+  const hasAccess = (itemId) => {
+    return unlockedContent.some(item => item.id === itemId);
   };
 
   const handlePremiumRequest = (item, type) => {
@@ -137,8 +77,7 @@ export function UserDashboard() {
   };
 
   const handleViewContent = (item, type) => {
-    const hasAccess_ = hasAccess(item.id, type);
-    console.log(`🔍 Checking access for ${item.id}:`, hasAccess_);
+    const hasAccess_ = hasAccess(item.id);
     
     if (item.type === 'premium' && !hasAccess_) {
       handlePremiumRequest(item, type);
@@ -163,14 +102,11 @@ export function UserDashboard() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => {
-          const itemId = item.id || item._id;
-          const isLocked = item.type === 'premium' && !hasAccess(itemId, type);
-          const isUnlocked = item.type === 'premium' && hasAccess(itemId, type);
-          
-          console.log(`📊 Item ${item.name || item.title}: locked=${isLocked}, unlocked=${isUnlocked}`);
+          const isUnlocked = hasAccess(item.id);
+          const isLocked = item.type === 'premium' && !isUnlocked;
           
           return (
-            <div key={itemId} className={`border rounded-2xl overflow-hidden hover:shadow-xl transition-all ${
+            <div key={item.id} className={`border rounded-2xl overflow-hidden hover:shadow-xl transition-all ${
               isLocked ? 'opacity-75' : ''
             }`}>
               <div className="relative">
@@ -225,6 +161,7 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Navigation with Premium Unlock Badge */}
       <nav className="bg-white shadow-md border-b-4 border-purple-400 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -240,6 +177,18 @@ export function UserDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              {/* Premium Unlock Badge */}
+              {unlockedCount > 0 && (
+                <div className="relative">
+                  <button 
+                    onClick={() => setActiveTab('premium-unlock')}
+                    className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 hover:shadow-xl transition-all"
+                  >
+                    <span className="text-lg">⭐</span>
+                    {unlockedCount} Premium Unlocked
+                  </button>
+                </div>
+              )}
               <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-full px-3 py-1">
                 {user?.photoURL ? (
                   <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full" />
@@ -252,11 +201,6 @@ export function UserDashboard() {
                   {user?.displayName || user?.email?.split('@')[0] || 'User'}
                 </span>
               </div>
-              {unlockedCount > 0 && (
-                <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                  {unlockedCount} unlocked
-                </span>
-              )}
               <button onClick={logout} className="text-gray-500 hover:text-gray-700 transition-all">
                 <i className="fas fa-sign-out-alt"></i>
               </button>
@@ -265,6 +209,7 @@ export function UserDashboard() {
         </div>
       </nav>
 
+      {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-2 mb-6 flex-wrap">
           <button
@@ -316,12 +261,33 @@ export function UserDashboard() {
               </span>
             )}
           </button>
+          {/* Premium Unlock Tab - New! */}
+          {unlockedCount > 0 && (
+            <button
+              onClick={() => setActiveTab('premium-unlock')}
+              className={`px-6 py-3 rounded-2xl font-bold transition-all transform hover:scale-105 ${
+                activeTab === 'premium-unlock'
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
+                  : 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 hover:shadow-lg'
+              }`}
+            >
+              <span className="text-2xl mr-2">⭐</span>
+              Premium Unlock
+              {unlockedCount > 0 && (
+                <span className="ml-2 bg-white text-green-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                  {unlockedCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
+        {/* Content */}
         <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
           {activeTab === 'stories' && renderContent(stories, 'story', 'fa-book', 'bg-blue-100')}
           {activeTab === 'videos' && renderContent(videos, 'video', 'fa-video', 'bg-red-100')}
           {activeTab === 'quizzes' && renderContent(quizzes, 'quiz', 'fa-puzzle-piece', 'bg-purple-100')}
+          
           {activeTab === 'library' && (
             <div>
               <h2 className="text-2xl font-bold text-gray-800 mb-4">📂 My Library</h2>
@@ -333,7 +299,7 @@ export function UserDashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {userData?.unlockedContent?.map((item) => (
+                  {unlockedContent.map((item) => (
                     <div key={item.id} className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-4 border-2 border-green-200">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center text-2xl">
@@ -356,9 +322,79 @@ export function UserDashboard() {
               )}
             </div>
           )}
+
+          {/* Premium Unlock Tab - Show all unlocked content */}
+          {activeTab === 'premium-unlock' && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-3xl">⭐</span>
+                <h2 className="text-2xl font-bold text-gray-800">Your Premium Unlocked Content</h2>
+              </div>
+              {unlockedCount === 0 ? (
+                <div className="text-center py-12">
+                  <i className="fas fa-star text-6xl text-gray-300 mb-4"></i>
+                  <p className="text-gray-500">No premium content unlocked yet</p>
+                  <p className="text-sm text-gray-400 mt-2">Request premium content to unlock!</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-gray-500 mb-4">
+                    You have <span className="font-bold text-green-600">{unlockedCount}</span> premium items unlocked!
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {unlockedContent.map((item) => {
+                      // Find the full item details from stories/videos/quizzes
+                      const storyItem = stories.find(s => s.id === item.id);
+                      const videoItem = videos.find(v => v.id === item.id);
+                      const quizItem = quizzes.find(q => q.id === item.id);
+                      const fullItem = storyItem || videoItem || quizItem;
+                      
+                      return (
+                        <div key={item.id} className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border-2 border-green-300 shadow-md">
+                          <div className="flex items-center gap-3">
+                            <div className="w-14 h-14 bg-green-200 rounded-xl flex items-center justify-center text-3xl">
+                              {item.type === 'story' && '📚'}
+                              {item.type === 'video' && '🎬'}
+                              {item.type === 'quiz' && '🧩'}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-bold text-gray-800 text-lg">{item.name}</p>
+                              <p className="text-xs text-gray-500 capitalize">{item.type}</p>
+                            </div>
+                          </div>
+                          {fullItem && fullItem.imageUrl && (
+                            <img src={fullItem.imageUrl} alt={item.name} className="w-full h-32 object-cover rounded-xl mt-3" />
+                          )}
+                          <div className="mt-3 flex items-center gap-3 text-xs">
+                            <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                              ✅ Unlocked
+                            </span>
+                            <span className="text-gray-500">
+                              {new Date(item.grantedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (item.type === 'story' && fullItem) {
+                                setViewingStory(fullItem);
+                              }
+                            }}
+                            className="mt-3 w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-all font-medium"
+                          >
+                            {item.type === 'story' ? '📖 Read Story' : item.type === 'video' ? '▶️ Watch Video' : '🧠 Start Quiz'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Premium Request Modal */}
       {showPremiumModal && (
         <PremiumRequest
           item={selectedItem}
@@ -367,6 +403,7 @@ export function UserDashboard() {
         />
       )}
 
+      {/* Story Viewer Modal */}
       {viewingStory && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
