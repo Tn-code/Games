@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export function VideoPlayer({ video, onClose, language }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -6,8 +6,33 @@ export function VideoPlayer({ video, onClose, language }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isYouTube, setIsYouTube] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState('');
   const videoRef = useRef(null);
   const containerRef = useRef(null);
+
+  // Check if it's a YouTube URL
+  useEffect(() => {
+    const url = video.videoUrl || '';
+    
+    // Check for YouTube URLs
+    if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+      setIsYouTube(true);
+      
+      // Extract video ID
+      let videoId = '';
+      if (url.includes('youtube.com/watch')) {
+        const params = new URLSearchParams(new URL(url).search);
+        videoId = params.get('v');
+      } else if (url.includes('youtu.be/')) {
+        videoId = url.split('/').pop();
+      }
+      
+      setEmbedUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`);
+    } else {
+      setIsYouTube(false);
+    }
+  }, [video.videoUrl]);
 
   const getDisplayName = () => {
     return language === 'fr' ? video.title : video.titleArabic;
@@ -40,6 +65,7 @@ export function VideoPlayer({ video, onClose, language }) {
   };
 
   const handleProgressClick = (e) => {
+    if (isYouTube) return; // YouTube doesn't support seeking this way
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     if (videoRef.current) {
@@ -67,6 +93,48 @@ export function VideoPlayer({ video, onClose, language }) {
     return language === 'fr' ? video.description : video.descriptionArabic;
   };
 
+  // If it's a YouTube video - use iframe embed
+  if (isYouTube) {
+    return (
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-lg flex items-center justify-center z-50 p-4 animate-fadeInUp">
+        <div className="bg-black rounded-3xl max-w-4xl w-full max-h-[95vh] overflow-hidden shadow-2xl">
+          {/* Header */}
+          <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-900 to-black">
+            <div>
+              <h2 className="text-xl font-bold text-white">{getDisplayName()}</h2>
+              <p className="text-sm text-gray-400">YouTube Video</p>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="text-gray-400 hover:text-white transition-all duration-300 hover:rotate-90 text-2xl"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+
+          {/* YouTube Video */}
+          <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
+            <iframe
+              src={embedUrl}
+              className="absolute top-0 left-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title={getDisplayName()}
+            />
+          </div>
+
+          {/* Description */}
+          {getDisplayContent() && (
+            <div className="p-4 bg-gradient-to-r from-gray-900 to-black">
+              <p className="text-gray-300 text-sm">{getDisplayContent()}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // For MP4 and other video files - use HTML5 video player
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-lg flex items-center justify-center z-50 p-4 animate-fadeInUp">
       <div className="bg-black rounded-3xl max-w-4xl w-full max-h-[95vh] overflow-hidden shadow-2xl" ref={containerRef}>
@@ -74,7 +142,7 @@ export function VideoPlayer({ video, onClose, language }) {
         <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-900 to-black">
           <div>
             <h2 className="text-xl font-bold text-white">{getDisplayName()}</h2>
-            <p className="text-sm text-gray-400">{video.duration || '5:30'}</p>
+            <p className="text-sm text-gray-400">{video.duration || 'Video'}</p>
           </div>
           <button 
             onClick={onClose} 
@@ -86,19 +154,25 @@ export function VideoPlayer({ video, onClose, language }) {
 
         {/* Video Container */}
         <div className="relative bg-black">
-          <video
-            ref={videoRef}
-            className="w-full aspect-video"
-            src={video.videoUrl}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onClick={togglePlay}
-            controls={false}
-            poster={video.thumbnailUrl}
-          />
+          {video.videoUrl ? (
+            <video
+              ref={videoRef}
+              className="w-full aspect-video"
+              src={video.videoUrl}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onClick={togglePlay}
+              controls={false}
+              poster={video.thumbnailUrl}
+            />
+          ) : (
+            <div className="w-full aspect-video bg-gray-800 flex items-center justify-center text-white">
+              <p>No video URL provided</p>
+            </div>
+          )}
           
           {/* Play Button Overlay */}
-          {!isPlaying && (
+          {!isPlaying && video.videoUrl && (
             <button
               onClick={togglePlay}
               className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-all duration-300 group"
@@ -110,34 +184,36 @@ export function VideoPlayer({ video, onClose, language }) {
           )}
 
           {/* Controls */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-            {/* Progress Bar */}
-            <div 
-              className="w-full h-2 bg-gray-600 rounded-full cursor-pointer mb-3"
-              onClick={handleProgressClick}
-            >
+          {video.videoUrl && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+              {/* Progress Bar */}
               <div 
-                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-200"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
+                className="w-full h-2 bg-gray-600 rounded-full cursor-pointer mb-3"
+                onClick={handleProgressClick}
+              >
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-200"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button onClick={togglePlay} className="text-white hover:text-purple-400 transition-all duration-300 text-xl">
-                  <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'}`}></i>
-                </button>
-                <span className="text-white text-sm">
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <button onClick={toggleFullscreen} className="text-white hover:text-purple-400 transition-all duration-300 text-xl">
-                  <i className={`fas ${isFullscreen ? 'fa-compress' : 'fa-expand'}`}></i>
-                </button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button onClick={togglePlay} className="text-white hover:text-purple-400 transition-all duration-300 text-xl">
+                    <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'}`}></i>
+                  </button>
+                  <span className="text-white text-sm">
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <button onClick={toggleFullscreen} className="text-white hover:text-purple-400 transition-all duration-300 text-xl">
+                    <i className={`fas ${isFullscreen ? 'fa-compress' : 'fa-expand'}`}></i>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Description */}
