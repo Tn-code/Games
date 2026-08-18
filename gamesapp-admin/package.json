@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:pwa": "vite build && cp -r public dist/"
   },
   "dependencies": {
     "firebase": "^10.7.1",
