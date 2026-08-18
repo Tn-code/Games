@@ -17,6 +17,7 @@ export function CreateVideoStory() {
   });
   
   const [loading, setLoading] = useState(false);
+  const [urlError, setUrlError] = useState('');
   const { addItem } = useFirestore('videos');
   const { showToast } = useToast();
 
@@ -31,6 +32,39 @@ export function CreateVideoStory() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setUrlError('');
+  };
+
+  const validateUrl = (url) => {
+    if (!url) return true;
+    
+    // Check if it's a valid YouTube URL
+    if (url.includes('youtu.be') || url.includes('youtube.com')) {
+      // Extract video ID
+      let videoId = null;
+      if (url.includes('youtu.be/')) {
+        const parts = url.split('/');
+        videoId = parts[parts.length - 1].split('?')[0];
+      } else if (url.includes('youtube.com/watch')) {
+        const match = url.match(/v=([^&]+)/);
+        if (match) videoId = match[1];
+      }
+      
+      if (videoId && videoId.length === 11) {
+        return true;
+      }
+      
+      setUrlError('⚠️ Invalid YouTube video ID. Please check the URL.');
+      return false;
+    }
+    
+    // Check if it's a direct video file
+    if (url.match(/\.(mp4|webm|ogg|mov)$/i)) {
+      return true;
+    }
+    
+    setUrlError('⚠️ Please enter a valid YouTube URL or direct video link.');
+    return false;
   };
 
   const handleSubmit = async (e) => {
@@ -45,6 +79,12 @@ export function CreateVideoStory() {
 
     if (!formData.videoUrl) {
       showToast('⚠️ Please enter a video URL', 'error');
+      setLoading(false);
+      return;
+    }
+
+    if (!validateUrl(formData.videoUrl)) {
+      showToast(urlError, 'error');
       setLoading(false);
       return;
     }
@@ -160,22 +200,29 @@ export function CreateVideoStory() {
                 Video URL *
               </label>
               <input
-                type="url"
+                type="text"
                 name="videoUrl"
                 value={formData.videoUrl}
                 onChange={handleChange}
-                className="input-field"
-                placeholder="https://example.com/video.mp4 or YouTube URL"
+                className={`input-field ${urlError ? 'border-red-500' : ''}`}
+                placeholder="https://www.youtube.com/watch?v=VIDEO_ID"
                 required
               />
-              {formData.videoUrl && (
-                <div className="mt-3">
-                  <p className="text-xs text-gray-500 mb-2">Preview:</p>
-                  <video 
-                    src={formData.videoUrl} 
-                    className="w-full max-h-64 rounded-xl border border-gray-200"
-                    controls
-                  />
+              {urlError && (
+                <p className="text-red-500 text-sm mt-1">{urlError}</p>
+              )}
+              <p className="text-xs text-gray-400 mt-1">
+                <i className="fas fa-info-circle mr-1"></i>
+                YouTube URL format: https://www.youtube.com/watch?v=VIDEO_ID
+                <br />
+                Or direct video: https://example.com/video.mp4
+              </p>
+              {formData.videoUrl && formData.videoUrl.includes('youtu.be') && (
+                <div className="mt-2 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <p className="text-xs text-yellow-700">
+                    <i className="fas fa-exclamation-triangle mr-1"></i>
+                    Using shortened URL (youtu.be). For best results, use the full URL with www.youtube.com
+                  </p>
                 </div>
               )}
             </div>
