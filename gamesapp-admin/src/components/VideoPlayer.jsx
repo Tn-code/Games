@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 export function VideoPlayer({ video, onClose, language }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-
   const getDisplayName = () => {
     return language === 'fr' ? video.title : (video.titleArabic || video.title);
   };
@@ -32,7 +30,23 @@ export function VideoPlayer({ video, onClose, language }) {
   };
 
   const videoId = getYouTubeId(video.videoUrl);
-  const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0` : null;
+
+  if (!videoId) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center z-[9999] p-4">
+        <div className="bg-white rounded-2xl max-w-5xl w-full p-8 text-center">
+          <i className="fas fa-exclamation-triangle text-6xl text-yellow-500 mb-4"></i>
+          <h2 className="text-2xl font-bold text-gray-800">Invalid YouTube URL</h2>
+          <p className="text-gray-500 mt-2">Please check the video URL</p>
+          <button onClick={onClose} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-xl">
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center z-[9999] p-4">
@@ -45,52 +59,22 @@ export function VideoPlayer({ video, onClose, language }) {
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl ml-2"
+            className="text-gray-500 hover:text-gray-700 text-2xl"
           >
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        {/* YouTube Video */}
+        {/* YouTube Player - Always visible */}
         <div className="relative bg-black" style={{ aspectRatio: '16/9' }}>
-          {!isPlaying ? (
-            // Thumbnail with Play Button
-            <div 
-              className="relative w-full h-full cursor-pointer"
-              onClick={() => setIsPlaying(true)}
-            >
-              {video.thumbnailUrl ? (
-                <img 
-                  src={video.thumbnailUrl} 
-                  alt={getDisplayName()}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-red-600 to-purple-800 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <i className="fab fa-youtube text-7xl mb-3"></i>
-                    <p className="text-lg">YouTube Video</p>
-                  </div>
-                </div>
-              )}
-              {/* Play Button Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/30 transition-all duration-300">
-                <div className="w-24 h-24 bg-red-600/80 rounded-full flex items-center justify-center text-white text-5xl hover:scale-110 transition-all duration-300 shadow-2xl">
-                  <i className="fas fa-play ml-2"></i>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // YouTube Player
-            <iframe
-              src={embedUrl}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title={getDisplayName()}
-              frameBorder="0"
-            />
-          )}
+          <iframe
+            src={embedUrl}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={getDisplayName()}
+            frameBorder="0"
+          />
         </div>
 
         {/* Description */}
