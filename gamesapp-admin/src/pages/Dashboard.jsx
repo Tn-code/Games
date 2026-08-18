@@ -13,6 +13,7 @@ import { CreateQuiz } from './CreateQuiz';
 import { UserManagement } from './UserManagement';
 import { UserContentManager } from './UserContentManager';
 import { AdminPremiumRequests } from './AdminPremiumRequests';
+import { Analytics } from './Analytics';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,6 +47,7 @@ export function Dashboard() {
 
   const renderContent = () => {
     switch(activeTab) {
+      case 'analytics': return <Analytics />;
       case 'premium-requests': return <AdminPremiumRequests />;
       case 'create-story': return <CreateStory />;
       case 'stories': return <StoriesList />;
