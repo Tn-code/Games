@@ -1,50 +1,52 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [displayName, setDisplayName] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
   const { login, register, loginWithGoogle } = useAuth();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccessMessage('');
     setLoading(true);
 
     let result;
     if (isRegistering) {
       result = await register(email, password, displayName);
       if (result.success) {
-        setSuccessMessage('✅ Account created! Please check your email to verify.');
+        showToast('✅ Account created! Please check your email to verify.', 'success');
         setIsRegistering(false);
         setEmail('');
         setPassword('');
         setDisplayName('');
         setLoading(false);
         return;
+      } else {
+        showToast(`❌ ${result.error}`, 'error');
       }
     } else {
       result = await login(email, password);
-    }
-
-    if (!result.success) {
-      setError(result.error.replace('Firebase: ', ''));
+      if (result.success) {
+        showToast('✅ Welcome back!', 'success');
+      } else {
+        showToast(`❌ ${result.error}`, 'error');
+      }
     }
     setLoading(false);
   };
 
   const handleGoogleLogin = async () => {
-    setError('');
     setLoading(true);
     const result = await loginWithGoogle();
-    if (!result.success) {
-      setError(result.error.replace('Firebase: ', ''));
+    if (result.success) {
+      showToast('✅ Welcome back!', 'success');
+    } else {
+      showToast(`❌ ${result.error}`, 'error');
     }
     setLoading(false);
   };
@@ -64,20 +66,6 @@ export function Login() {
               {isRegistering ? 'Sign up to start playing' : 'Sign in to your account'}
             </p>
           </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
-              <i className="fas fa-exclamation-circle"></i>
-              {error}
-            </div>
-          )}
-
-          {successMessage && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-center gap-2">
-              <i className="fas fa-check-circle"></i>
-              {successMessage}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit}>
             {isRegistering && (
@@ -173,8 +161,6 @@ export function Login() {
               type="button"
               onClick={() => {
                 setIsRegistering(!isRegistering);
-                setError('');
-                setSuccessMessage('');
               }}
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >

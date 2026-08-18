@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useFirestore } from '../hooks/useFirestore';
+import { useToast } from '../contexts/ToastContext';
 
 export function CreateQuiz() {
   const [formData, setFormData] = useState({
@@ -7,6 +8,7 @@ export function CreateQuiz() {
     titleArabic: '',
     description: '',
     descriptionArabic: '',
+    category: 'education',
     difficulty: 'easy',
     timeLimit: 5,
     points: 10,
@@ -23,9 +25,17 @@ export function CreateQuiz() {
   });
   
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
   const [optionCount, setOptionCount] = useState(4);
   const { addItem } = useFirestore('quizzes');
+  const { showToast } = useToast();
+
+  const categories = [
+    { id: 'kids', label: '🧒 Kids', labelAr: '🧒 أطفال' },
+    { id: 'education', label: '📚 Education', labelAr: '📚 تعليم' },
+    { id: 'entertainment', label: '🎭 Entertainment', labelAr: '🎭 ترفيه' },
+    { id: 'story', label: '📖 Story', labelAr: '📖 قصة' },
+    { id: 'game', label: '🎮 Game', labelAr: '🎮 لعبة' },
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,7 +103,6 @@ export function CreateQuiz() {
   const handleOptionCountChange = (e) => {
     const count = parseInt(e.target.value);
     setOptionCount(count);
-    // Update all questions with new option count
     const newQuestions = formData.questions.map(q => {
       const currentOptions = q.options || [];
       const currentOptionsArabic = q.optionsArabic || [];
@@ -121,49 +130,36 @@ export function CreateQuiz() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ type: '', text: '' });
 
-    // Validate form
     if (!formData.title || !formData.titleArabic) {
-      setMessage({ type: 'error', text: '⚠️ Please enter quiz title in both French and Arabic' });
+      showToast('⚠️ Please enter quiz title in both languages', 'error');
       setLoading(false);
       return;
     }
 
     if (!formData.description || !formData.descriptionArabic) {
-      setMessage({ type: 'error', text: '⚠️ Please enter description in both French and Arabic' });
+      showToast('⚠️ Please enter description in both languages', 'error');
       setLoading(false);
       return;
     }
 
-    // Validate questions
     for (let i = 0; i < formData.questions.length; i++) {
       const q = formData.questions[i];
       if (!q.question || !q.questionArabic) {
-        setMessage({ type: 'error', text: `⚠️ Please fill question ${i + 1} in both languages` });
+        showToast(`⚠️ Please fill question ${i + 1} in both languages`, 'error');
         setLoading(false);
         return;
       }
       
-      // Check if at least 2 options have values
       const filledOptions = q.options.filter(opt => opt.trim() !== '');
       if (filledOptions.length < 2) {
-        setMessage({ type: 'error', text: `⚠️ Question ${i + 1} needs at least 2 options` });
+        showToast(`⚠️ Question ${i + 1} needs at least 2 options`, 'error');
         setLoading(false);
         return;
       }
       
-      // Check Arabic options
-      const filledOptionsArabic = q.optionsArabic.filter(opt => opt.trim() !== '');
-      if (filledOptionsArabic.length < 2) {
-        setMessage({ type: 'error', text: `⚠️ Question ${i + 1} needs at least 2 Arabic options` });
-        setLoading(false);
-        return;
-      }
-      
-      // Check if correct answer is selected
       if (q.correctAnswer === null || q.correctAnswer === undefined) {
-        setMessage({ type: 'error', text: `⚠️ Please select the correct answer for question ${i + 1}` });
+        showToast(`⚠️ Please select the correct answer for question ${i + 1}`, 'error');
         setLoading(false);
         return;
       }
@@ -179,8 +175,7 @@ export function CreateQuiz() {
       const result = await addItem(quizData);
       
       if (result.success) {
-        setMessage({ type: 'success', text: '✅ Quiz created successfully!' });
-        // Reset form
+        showToast('✅ Quiz created successfully!', 'success');
         const options = Array(optionCount).fill('');
         const optionsArabic = Array(optionCount).fill('');
         setFormData({
@@ -188,6 +183,7 @@ export function CreateQuiz() {
           titleArabic: '',
           description: '',
           descriptionArabic: '',
+          category: 'education',
           difficulty: 'easy',
           timeLimit: 5,
           points: 10,
@@ -203,52 +199,23 @@ export function CreateQuiz() {
           ]
         });
       } else {
-        setMessage({ type: 'error', text: `❌ Error: ${result.error}` });
+        showToast(`❌ Error: ${result.error}`, 'error');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: `❌ Error: ${error.message}` });
+      showToast(`❌ Error: ${error.message}`, 'error');
     }
     setLoading(false);
-  };
-
-  // Get letter for option
-  const getOptionLetter = (index) => {
-    return String.fromCharCode(65 + index);
-  };
-
-  // Get color for option
-  const getOptionColor = (index) => {
-    const colors = ['blue', 'green', 'purple', 'orange'];
-    return colors[index % colors.length];
   };
 
   return (
     <div className="flex-1 p-8 bg-gradient-to-br from-gray-50 to-purple-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 animate-fadeInDown">
-          <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <i className="fas fa-plus-circle text-purple-600 animate-pulse"></i>
-            Create New Quiz
-          </h2>
-          <p className="text-gray-500 mt-2">Create a quiz with questions in French and Arabic</p>
-        </div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3 animate-fadeInDown">
+          <i className="fas fa-plus-circle text-purple-600"></i>
+          Create New Quiz
+        </h2>
 
-        {/* Message Alert */}
-        {message.text && (
-          <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-fadeInUp ${
-            message.type === 'success' 
-              ? 'bg-green-50 border border-green-200 text-green-700' 
-              : 'bg-red-50 border border-red-200 text-red-700'
-          }`}>
-            <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
-            {message.text}
-          </div>
-        )}
-
-        {/* Form */}
         <form onSubmit={handleSubmit} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 animate-fadeInUp">
-          {/* Quiz Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Title - French */}
             <div>
@@ -318,6 +285,33 @@ export function CreateQuiz() {
               />
             </div>
 
+            {/* Category */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <i className="fas fa-tags text-yellow-500 mr-2"></i>
+                Category *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, category: cat.id }))}
+                    className={`p-3 rounded-xl border-2 transition-all duration-300 ${
+                      formData.category === cat.id
+                        ? 'border-purple-500 bg-purple-50 shadow-lg shadow-purple-200'
+                        : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-2xl">{cat.label.split(' ')[0]}</div>
+                      <p className="text-xs font-medium text-gray-700 mt-1">{cat.label.split(' ')[1]}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Quiz Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -350,7 +344,7 @@ export function CreateQuiz() {
               </div>
             </div>
 
-            {/* Quiz Settings */}
+            {/* Difficulty */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-signal text-yellow-500 mr-2"></i>
@@ -449,7 +443,6 @@ export function CreateQuiz() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Question French */}
                   <div>
                     <label className="block text-sm text-gray-600 mb-1">Question (French) *</label>
                     <input
@@ -460,8 +453,6 @@ export function CreateQuiz() {
                       placeholder="Enter question in French"
                     />
                   </div>
-
-                  {/* Question Arabic */}
                   <div>
                     <label className="block text-sm text-gray-600 mb-1">Question (Arabic) *</label>
                     <input
@@ -474,7 +465,6 @@ export function CreateQuiz() {
                     />
                   </div>
 
-                  {/* Options with Correct Answer Selection */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       <i className="fas fa-list-ul text-purple-500 mr-2"></i>
@@ -532,82 +522,30 @@ export function CreateQuiz() {
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                      <i className="fas fa-info-circle text-purple-500"></i>
-                      Click on the circle next to the correct answer
-                    </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Submit Button */}
-          <div className="mt-8 flex gap-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary flex-1 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Creating Quiz...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-plus-circle"></i>
-                  Create Quiz
-                </>
-              )}
-            </button>
-            <button
-              type="reset"
-              onClick={() => {
-                const options = Array(optionCount).fill('');
-                const optionsArabic = Array(optionCount).fill('');
-                setFormData({
-                  title: '',
-                  titleArabic: '',
-                  description: '',
-                  descriptionArabic: '',
-                  difficulty: 'easy',
-                  timeLimit: 5,
-                  points: 10,
-                  type: 'free',
-                  questions: [
-                    {
-                      question: '',
-                      questionArabic: '',
-                      options: options,
-                      optionsArabic: optionsArabic,
-                      correctAnswer: 0
-                    }
-                  ]
-                });
-                setMessage({ type: '', text: '' });
-              }}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <i className="fas fa-undo"></i>
-              Reset
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full mt-8 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Creating Quiz...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-plus-circle"></i>
+                Create Quiz
+              </>
+            )}
+          </button>
         </form>
-
-        {/* Tips */}
-        <div className="mt-6 p-4 bg-purple-50 rounded-xl border border-purple-100 animate-fadeInUp">
-          <h4 className="font-semibold text-purple-800 flex items-center gap-2">
-            <i className="fas fa-lightbulb"></i>
-            Tips:
-          </h4>
-          <ul className="mt-2 text-sm text-purple-700 space-y-1">
-            <li>• Click the circle next to an option to mark it as the correct answer</li>
-            <li>• Questions and options must be in both French and Arabic</li>
-            <li>• Choose 3 or 4 options per question</li>
-            <li>• The correct answer will be highlighted in green</li>
-          </ul>
-        </div>
       </div>
     </div>
   );

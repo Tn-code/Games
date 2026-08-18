@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
+import { useToast } from '../contexts/ToastContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { PremiumRequest } from './PremiumRequest';
 import { QuizPlay } from './QuizPlay';
 import { VideoPlayer } from '../components/VideoPlayer';
+import { Categories } from '../components/Categories';
+import { UserProgress } from '../components/UserProgress';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 export function UserDashboard() {
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const { data: stories, loading: storiesLoading } = useFirestore('stories');
   const { data: videos, loading: videosLoading } = useFirestore('videos');
   const { data: quizzes, loading: quizzesLoading } = useFirestore('quizzes');
@@ -26,8 +30,8 @@ export function UserDashboard() {
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [unlockedItems, setUnlockedItems] = useState([]);
   const [language, setLanguage] = useState('fr');
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // Real-time listener for user data
   useEffect(() => {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
@@ -69,6 +73,7 @@ export function UserDashboard() {
     setShowPremiumModal(false);
     setSelectedItem(null);
     fetchUsers();
+    showToast('🔄 Content updated!', 'info');
   };
 
   const handleViewContent = (item, type) => {
@@ -84,6 +89,7 @@ export function UserDashboard() {
 
   const toggleLanguage = () => {
     setLanguage(language === 'fr' ? 'ar' : 'fr');
+    showToast(language === 'fr' ? '🇸🇦 Arabic selected' : '🇫🇷 Français sélectionné', 'info');
   };
 
   const getDisplayName = (item) => {
@@ -94,19 +100,27 @@ export function UserDashboard() {
     return language === 'fr' ? item.content : item.contentArabic;
   };
 
+  const filterByCategory = (items) => {
+    if (!selectedCategory || selectedCategory === 'all') return items;
+    return items.filter(item => item.category === selectedCategory);
+  };
+
   const renderContent = (items, type, icon, color) => {
-    if (items.length === 0) {
+    const filteredItems = filterByCategory(items);
+    if (filteredItems.length === 0) {
       return (
         <div className="text-center py-12 animate-fadeInUp">
           <i className={`fas ${icon} text-6xl text-gray-300 mb-4 floating`}></i>
-          <p className="text-gray-500">{language === 'fr' ? `Aucun ${type} disponible` : `لا يوجد ${type === 'story' ? 'قصص' : type === 'video' ? 'فيديوهات' : 'اختبارات'}`}</p>
+          <p className="text-gray-500">
+            {language === 'fr' ? `Aucun ${type} dans cette catégorie` : `لا يوجد ${type === 'story' ? 'قصص' : type === 'video' ? 'فيديوهات' : 'اختبارات'} في هذا التصنيف`}
+          </p>
         </div>
       );
     }
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item, index) => {
+        {filteredItems.map((item, index) => {
           const isUnlocked = hasAccess(item.id);
           const isLocked = item.type === 'premium' && !isUnlocked;
           const displayName = getDisplayName(item);
@@ -228,7 +242,10 @@ export function UserDashboard() {
                 </span>
               </div>
               <button 
-                onClick={logout} 
+                onClick={() => {
+                  logout();
+                  showToast('👋 Logged out successfully', 'info');
+                }} 
                 className="text-gray-500 hover:text-gray-700 transition-all duration-300 hover:scale-110"
               >
                 <i className="fas fa-sign-out-alt"></i>
@@ -238,21 +255,29 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {/* Tabs */}
+      {/* User Progress */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex gap-2 mb-6 flex-wrap animate-fadeInDown">
+        <UserProgress stats={{
+          storiesRead: unlockedContent.filter(i => i.type === 'story').length,
+          totalStories: stories.length || 10,
+          quizzesCompleted: unlockedContent.filter(i => i.type === 'quiz').length,
+          totalQuizzes: quizzes.length || 5,
+          videosWatched: unlockedContent.filter(i => i.type === 'video').length,
+          totalVideos: videos.length || 8,
+          points: unlockedContent.length * 10,
+          totalPoints: (stories.length + quizzes.length + videos.length) * 10 || 1000,
+        }} />
+      </div>
+
+      {/* Tabs and Categories */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex gap-2 mb-4 flex-wrap animate-fadeInDown">
           {['stories', 'videos', 'quizzes', 'library'].map((tab, index) => {
             const icons = ['📚', '🎬', '🧩', '📂'];
             const labels = {
               fr: ['Stories', 'Videos', 'Quizzes', 'Ma Bibliothèque'],
               ar: ['قصص', 'فيديوهات', 'اختبارات', 'مكتبتي']
             };
-            const colors = [
-              'from-blue-500 to-blue-600',
-              'from-red-500 to-pink-600',
-              'from-purple-500 to-purple-600',
-              'from-green-500 to-green-600'
-            ];
             return (
               <button
                 key={tab}
@@ -282,6 +307,11 @@ export function UserDashboard() {
             </button>
           )}
         </div>
+
+        {/* Categories */}
+        {(activeTab === 'stories' || activeTab === 'videos' || activeTab === 'quizzes') && (
+          <Categories selected={selectedCategory} onSelect={setSelectedCategory} />
+        )}
 
         {/* Content */}
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-white/50 animate-fadeInUp">
@@ -409,14 +439,12 @@ export function UserDashboard() {
         <PremiumRequest item={selectedItem} type={premiumType} onClose={handleModalClose} />
       )}
 
-      {/* Video Player Modal */}
       {watchingVideo && (
         <VideoPlayer video={watchingVideo} onClose={() => setWatchingVideo(null)} language={language} />
       )}
 
-      {/* Story Viewer Modal */}
       {viewingStory && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeInUp">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-40 p-4 animate-fadeInUp">
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 animate-scaleIn">
             <div className="flex justify-between items-start mb-4">
               <div>
@@ -437,7 +465,7 @@ export function UserDashboard() {
       )}
 
       {playingQuiz && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeInUp">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-40 p-4 animate-fadeInUp">
           <QuizPlay quiz={playingQuiz} onClose={() => setPlayingQuiz(null)} language={language} />
         </div>
       )}

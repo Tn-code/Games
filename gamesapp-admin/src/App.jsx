@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { UserDashboard } from './pages/UserDashboard';
@@ -20,7 +21,6 @@ function AppContent() {
     return <Login />;
   }
 
-  // Admin routes
   if (isAdmin) {
     return (
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -35,7 +35,6 @@ function AppContent() {
     );
   }
 
-  // User routes
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
@@ -49,7 +48,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AuthProvider>
   );
 }

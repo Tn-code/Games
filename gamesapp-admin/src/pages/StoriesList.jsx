@@ -3,6 +3,17 @@ import { useFirestore } from '../hooks/useFirestore';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
+const getCategoryLabel = (category) => {
+  const categories = {
+    kids: '🧒 Kids',
+    education: '📚 Education',
+    entertainment: '🎭 Entertainment',
+    story: '📖 Story',
+    game: '🎮 Game'
+  };
+  return categories[category] || '📖 Story';
+};
+
 export function StoriesList() {
   const { data: stories, loading, deleteItem } = useFirestore('stories');
   const navigate = useNavigate();
@@ -22,14 +33,23 @@ export function StoriesList() {
               <div className="h-40 bg-gray-200 relative">
                 <img src={story.imageUrl || 'https://via.placeholder.com/400x200/cccccc/666666?text=Story'} alt={story.name} className="w-full h-full object-cover" />
                 <div className="absolute top-3 right-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${story.type === 'premium' ? 'bg-yellow-400' : 'bg-green-400'}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    story.type === 'premium' ? 'bg-yellow-400' : 'bg-green-400'
+                  }`}>
                     {story.type === 'premium' ? '⭐ Premium' : '📖 Free'}
                   </span>
                 </div>
               </div>
               <div className="p-4">
-                <h3 className="font-bold text-gray-800">{story.name}</h3>
-                <p className="text-sm text-gray-500">{story.nameArabic}</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-gray-800">{story.name}</h3>
+                    <p className="text-sm text-gray-500">{story.nameArabic}</p>
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
+                    {getCategoryLabel(story.category)}
+                  </span>
+                </div>
                 <div className="mt-3 flex gap-2">
                   <button 
                     onClick={() => navigate(`/edit-story/${story.id}`)}

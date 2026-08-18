@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useFirestore } from '../hooks/useFirestore';
+import { useToast } from '../contexts/ToastContext';
 
 export function CreateVideoStory() {
   const [formData, setFormData] = useState({
@@ -10,13 +11,22 @@ export function CreateVideoStory() {
     description: '',
     descriptionArabic: '',
     type: 'free',
+    category: 'entertainment',
     duration: '',
     views: 0
   });
   
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
   const { addItem } = useFirestore('videos');
+  const { showToast } = useToast();
+
+  const categories = [
+    { id: 'kids', label: '🧒 Kids', labelAr: '🧒 أطفال' },
+    { id: 'education', label: '📚 Education', labelAr: '📚 تعليم' },
+    { id: 'entertainment', label: '🎭 Entertainment', labelAr: '🎭 ترفيه' },
+    { id: 'story', label: '📖 Story', labelAr: '📖 قصة' },
+    { id: 'game', label: '🎮 Game', labelAr: '🎮 لعبة' },
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,16 +36,15 @@ export function CreateVideoStory() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ type: '', text: '' });
 
     if (!formData.title || !formData.titleArabic) {
-      setMessage({ type: 'error', text: 'Please enter video title in both French and Arabic' });
+      showToast('⚠️ Please enter video title in both languages', 'error');
       setLoading(false);
       return;
     }
 
     if (!formData.videoUrl) {
-      setMessage({ type: 'error', text: 'Please enter a video URL' });
+      showToast('⚠️ Please enter a video URL', 'error');
       setLoading(false);
       return;
     }
@@ -50,7 +59,7 @@ export function CreateVideoStory() {
       const result = await addItem(videoData);
       
       if (result.success) {
-        setMessage({ type: 'success', text: '✅ Video story created successfully!' });
+        showToast('✅ Video story created successfully!', 'success');
         setFormData({
           title: '',
           titleArabic: '',
@@ -59,44 +68,28 @@ export function CreateVideoStory() {
           description: '',
           descriptionArabic: '',
           type: 'free',
+          category: 'entertainment',
           duration: '',
           views: 0
         });
       } else {
-        setMessage({ type: 'error', text: `❌ Error: ${result.error}` });
+        showToast(`❌ Error: ${result.error}`, 'error');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: `❌ Error: ${error.message}` });
+      showToast(`❌ Error: ${error.message}`, 'error');
     }
     setLoading(false);
   };
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 min-h-screen">
+    <div className="flex-1 p-8 bg-gradient-to-br from-gray-50 to-red-50 min-h-screen">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <i className="fas fa-plus-circle text-red-600"></i>
-            Create Video Story
-          </h2>
-          <p className="text-gray-500 mt-2">Add a new video story to your collection</p>
-        </div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3 animate-fadeInDown">
+          <i className="fas fa-plus-circle text-red-600"></i>
+          Create Video Story
+        </h2>
 
-        {/* Message Alert */}
-        {message.text && (
-          <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
-            message.type === 'success' 
-              ? 'bg-green-50 border border-green-200 text-green-700' 
-              : 'bg-red-50 border border-red-200 text-red-700'
-          }`}>
-            <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
-            {message.text}
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <form onSubmit={handleSubmit} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 animate-fadeInUp">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Title - French */}
             <div>
@@ -131,6 +124,33 @@ export function CreateVideoStory() {
                 dir="rtl"
                 required
               />
+            </div>
+
+            {/* Category */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <i className="fas fa-tags text-yellow-500 mr-2"></i>
+                Category *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, category: cat.id }))}
+                    className={`p-3 rounded-xl border-2 transition-all duration-300 ${
+                      formData.category === cat.id
+                        ? 'border-red-500 bg-red-50 shadow-lg shadow-red-200'
+                        : 'border-gray-200 hover:border-red-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-2xl">{cat.label.split(' ')[0]}</div>
+                      <p className="text-xs font-medium text-gray-700 mt-1">{cat.label.split(' ')[1]}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Video URL */}
@@ -228,7 +248,7 @@ export function CreateVideoStory() {
                     value="free"
                     checked={formData.type === 'free'}
                     onChange={handleChange}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-green-600"
                   />
                   <span className="font-medium">📖 Free</span>
                 </label>
@@ -239,7 +259,7 @@ export function CreateVideoStory() {
                     value="premium"
                     checked={formData.type === 'premium'}
                     onChange={handleChange}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-purple-600"
                   />
                   <span className="font-medium">⭐ Premium</span>
                 </label>
@@ -263,47 +283,23 @@ export function CreateVideoStory() {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="mt-8 flex gap-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary flex-1 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Creating Video...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-plus-circle"></i>
-                  Create Video Story
-                </>
-              )}
-            </button>
-            <button
-              type="reset"
-              onClick={() => {
-                setFormData({
-                  title: '',
-                  titleArabic: '',
-                  videoUrl: '',
-                  thumbnailUrl: '',
-                  description: '',
-                  descriptionArabic: '',
-                  type: 'free',
-                  duration: '',
-                  views: 0
-                });
-                setMessage({ type: '', text: '' });
-              }}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <i className="fas fa-undo"></i>
-              Reset
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full mt-8 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Creating Video...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-plus-circle"></i>
+                Create Video Story
+              </>
+            )}
+          </button>
         </form>
       </div>
     </div>
