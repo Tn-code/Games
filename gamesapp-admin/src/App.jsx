@@ -23,7 +23,7 @@ function AppContent() {
   // Admin routes
   if (isAdmin) {
     return (
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/edit-story/:id" element={<EditStory />} />
@@ -37,7 +37,7 @@ function AppContent() {
 
   // User routes
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<UserDashboard />} />
         <Route path="*" element={<Navigate to="/" />} />
