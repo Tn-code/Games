@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { db } from '../firebase/config';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { sendPremiumApprovedEmail, sendPremiumRejectedEmail } from '../services/emailService';
 
 export function AdminPremiumRequests() {
   const { user: currentUser } = useAuth();
@@ -50,9 +51,7 @@ export function AdminPremiumRequests() {
         const userData = userDoc.data();
         const unlocked = userData?.unlockedContent || [];
         
-        // For subscription - UNLOCK ALL PREMIUM CONTENT
         if (request.subscription) {
-          // Get all premium content IDs
           const premiumStories = stories.filter(s => s.type === 'premium').map(s => ({
             id: s.id,
             name: s.name,
@@ -71,14 +70,10 @@ export function AdminPremiumRequests() {
             type: 'quiz'
           }));
           
-          // Combine all premium content
           const allPremiumContent = [...premiumStories, ...premiumVideos, ...premiumQuizzes];
-          
-          // Filter out already unlocked content
           const unlockedIds = unlocked.map(item => item.id);
           const newContent = allPremiumContent.filter(item => !unlockedIds.includes(item.id));
           
-          // Add subscription flag
           const subscriptionItem = {
             id: 'subscription',
             name: 'Abonnement Premium (Tout accès)',
@@ -88,7 +83,6 @@ export function AdminPremiumRequests() {
             paid: true
           };
           
-          // Update user with ALL premium content + subscription flag
           await updateDoc(userRef, {
             isSubscribed: true,
             subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -100,7 +94,6 @@ export function AdminPremiumRequests() {
             text: `✅ Abonnement premium activé pour ${user.email} (${newContent.length} contenus débloqués)` 
           });
         } else {
-          // Single item unlock
           const alreadyUnlocked = unlocked.some(item => item.id === request.itemId);
           if (!alreadyUnlocked) {
             const newContent = {
@@ -118,6 +111,18 @@ export function AdminPremiumRequests() {
           } else {
             setMessage({ type: 'info', text: `ℹ️ "${request.itemName}" déjà débloqué pour ${user.email}` });
           }
+        }
+
+        // Send email notification
+        try {
+          await sendPremiumApprovedEmail(
+            user.email,
+            user.displayName || 'User',
+            request.itemName
+          );
+          console.log('📧 Email sent to:', user.email);
+        } catch (emailError) {
+          console.error('Email error:', emailError);
         }
       } else {
         setMessage({ type: 'error', text: `❌ Utilisateur non trouvé: ${request.userEmail}` });
@@ -145,6 +150,21 @@ export function AdminPremiumRequests() {
         rejectedBy: currentUser.email
       });
       await fetchData();
+      
+      // Send email notification
+      const user = users.find(u => u.email === request.userEmail);
+      if (user) {
+        try {
+          await sendPremiumRejectedEmail(
+            user.email,
+            user.displayName || 'User',
+            request.itemName
+          );
+        } catch (emailError) {
+          console.error('Email error:', emailError);
+        }
+      }
+      
       setMessage({ type: 'success', text: `❌ Demande rejetée: "${request.itemName}"` });
     } catch (error) {
       setMessage({ type: 'error', text: `❌ Erreur: ${error.message}` });
