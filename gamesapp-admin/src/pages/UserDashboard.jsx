@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
+import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { PremiumRequest } from './PremiumRequest';
@@ -8,11 +9,13 @@ import { QuizPlay } from './QuizPlay';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { Categories } from '../components/Categories';
 import { UserProgress } from '../components/UserProgress';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 export function UserDashboard() {
   const { user, logout } = useAuth();
+  const { currentTheme } = useTheme();
   const { showToast } = useToast();
   const { data: stories, loading: storiesLoading } = useFirestore('stories');
   const { data: videos, loading: videosLoading } = useFirestore('videos');
@@ -119,7 +122,7 @@ export function UserDashboard() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredItems.map((item, index) => {
           const isUnlocked = hasAccess(item.id);
           const isLocked = item.type === 'premium' && !isUnlocked;
@@ -128,7 +131,7 @@ export function UserDashboard() {
           return (
             <div 
               key={item.id} 
-              className={`border rounded-2xl overflow-hidden hover-lift animate-fadeInUp`}
+              className={`${currentTheme.card} rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border ${currentTheme.cardBorder} animate-fadeInUp`}
               style={{ animationDelay: `${(index % 5 + 1) * 0.1}s` }}
             >
               <div className="relative group">
@@ -149,17 +152,17 @@ export function UserDashboard() {
                 )}
                 <div className="absolute top-3 right-3 flex gap-2 flex-wrap">
                   {item.type === 'premium' && (
-                    <span className="badge-premium animate-pulse">
+                    <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 rounded-full text-xs font-bold shadow-lg animate-pulse">
                       ⭐ {language === 'fr' ? 'Premium' : 'مميز'}
                     </span>
                   )}
                   {isLocked && (
-                    <span className="badge-locked">
+                    <span className="px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-xs font-bold shadow-lg">
                       🔒 {language === 'fr' ? 'Fermé' : 'مغلق'}
                     </span>
                   )}
                   {isUnlocked && (
-                    <span className="badge-unlocked animate-bounceIn">
+                    <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full text-xs font-bold shadow-lg animate-bounceIn">
                       ✅ {language === 'fr' ? 'Débloqué' : 'مفتوح'}
                     </span>
                   )}
@@ -167,10 +170,10 @@ export function UserDashboard() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               <div className="p-4">
-                <h3 className="font-bold text-lg text-gray-800">{displayName}</h3>
+                <h3 className={`font-bold text-lg ${currentTheme.text}`}>{displayName}</h3>
                 <button
                   onClick={() => handleViewContent(item, type)}
-                  className={`mt-3 w-full py-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+                  className={`mt-3 w-full py-2.5 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 ${
                     isLocked
                       ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-600/30'
                       : isUnlocked
@@ -195,9 +198,9 @@ export function UserDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className={`min-h-screen ${currentTheme.background} transition-all duration-500`}>
       {/* Navigation */}
-      <nav className="glass sticky top-0 z-10 border-b border-white/30">
+      <nav className={`${currentTheme.navbar} sticky top-0 z-10 border-b ${currentTheme.cardBorder} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
@@ -205,13 +208,16 @@ export function UserDashboard() {
                 🎮
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold gradient-text">
+                <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
                   GamesApp
                 </h1>
-                <p className="text-xs text-gray-500">{language === 'fr' ? 'Amusement pour tous!' : 'متعة للجميع!'}</p>
+                <p className={`text-xs ${currentTheme.textSecondary}`}>
+                  {language === 'fr' ? 'Amusement pour tous!' : 'متعة للجميع!'}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <button
                 onClick={toggleLanguage}
                 className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
@@ -219,7 +225,6 @@ export function UserDashboard() {
                 <i className="fas fa-globe"></i>
                 {language === 'fr' ? '🇫🇷 FR' : '🇸🇦 AR'}
               </button>
-
               {unlockedCount > 0 && (
                 <button 
                   onClick={() => setActiveTab('premium-unlock')}
@@ -229,7 +234,7 @@ export function UserDashboard() {
                   {unlockedCount} {language === 'fr' ? 'Débloqués' : 'مفتوحة'}
                 </button>
               )}
-              <div className="flex items-center gap-2 glass rounded-full px-3 py-1">
+              <div className={`flex items-center gap-2 ${currentTheme.card} rounded-full px-3 py-1 border ${currentTheme.cardBorder}`}>
                 {user?.photoURL ? (
                   <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border-2 border-purple-400" />
                 ) : (
@@ -237,7 +242,7 @@ export function UserDashboard() {
                     <i className="fas fa-user"></i>
                   </div>
                 )}
-                <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                <span className={`text-sm font-medium ${currentTheme.text} hidden sm:block`}>
                   {user?.displayName || user?.email?.split('@')[0] || 'User'}
                 </span>
               </div>
@@ -246,7 +251,7 @@ export function UserDashboard() {
                   logout();
                   showToast('👋 Logged out successfully', 'info');
                 }} 
-                className="text-gray-500 hover:text-gray-700 transition-all duration-300 hover:scale-110"
+                className={`${currentTheme.text} hover:${currentTheme.text} transition-all duration-300 hover:scale-110`}
               >
                 <i className="fas fa-sign-out-alt"></i>
               </button>
@@ -282,7 +287,11 @@ export function UserDashboard() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fadeInUp delay-${(index + 1) * 100}`}
+                className={`px-6 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fadeInUp ${
+                  activeTab === tab
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                    : `${currentTheme.card} ${currentTheme.text} hover:bg-gray-100 border ${currentTheme.cardBorder}`
+                }`}
                 style={{ animationDelay: `${(index + 1) * 0.1}s` }}
               >
                 <span className="text-2xl mr-2">{icons[index]}</span>
@@ -293,7 +302,7 @@ export function UserDashboard() {
           {unlockedCount > 0 && (
             <button
               onClick={() => setActiveTab('premium-unlock')}
-              className={`px-6 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fadeInUp delay-500 ${
+              className={`px-6 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fadeInUp ${
                 activeTab === 'premium-unlock'
                   ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
                   : 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 hover:shadow-lg'
@@ -314,14 +323,16 @@ export function UserDashboard() {
         )}
 
         {/* Content */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-white/50 animate-fadeInUp">
+        <div className={`${currentTheme.card} rounded-3xl shadow-xl p-6 border ${currentTheme.cardBorder} animate-fadeInUp`}>
           {activeTab === 'stories' && renderContent(stories, 'story', 'fa-book', 'bg-blue-100')}
           {activeTab === 'videos' && renderContent(videos, 'video', 'fa-video', 'bg-red-100')}
           {activeTab === 'quizzes' && renderContent(quizzes, 'quiz', 'fa-puzzle-piece', 'bg-purple-100')}
           
           {activeTab === 'library' && (
             <div className="animate-fadeInUp">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">{language === 'fr' ? '📂 Ma Bibliothèque' : '📂 مكتبتي'}</h2>
+              <h2 className={`text-2xl font-bold ${currentTheme.text} mb-4`}>
+                {language === 'fr' ? '📂 Ma Bibliothèque' : '📂 مكتبتي'}
+              </h2>
               {unlockedCount === 0 ? (
                 <div className="text-center py-12">
                   <i className="fas fa-folder-open text-6xl text-gray-300 mb-4 floating"></i>
@@ -330,36 +341,29 @@ export function UserDashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {unlockedContent.map((item, index) => {
-                    const fullItem = stories.find(s => s.id === item.id) || 
-                                    videos.find(v => v.id === item.id) || 
-                                    quizzes.find(q => q.id === item.id);
-                    const displayName = getDisplayName(fullItem || item);
-                    
-                    return (
-                      <div 
-                        key={item.id} 
-                        className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border-2 border-green-200 hover-lift animate-fadeInUp"
-                        style={{ animationDelay: `${index * 0.1}s` }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center text-2xl floating">
-                            {item.type === 'story' && '📚'}
-                            {item.type === 'video' && '🎬'}
-                            {item.type === 'quiz' && '🧩'}
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-800">{displayName}</p>
-                            <p className="text-xs text-gray-500 capitalize">{item.type}</p>
-                          </div>
+                  {unlockedContent.map((item, index) => (
+                    <div 
+                      key={item.id} 
+                      className={`${currentTheme.card} rounded-2xl p-4 border-2 border-green-200 hover-lift animate-fadeInUp`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center text-2xl floating">
+                          {item.type === 'story' && '📚'}
+                          {item.type === 'video' && '🎬'}
+                          {item.type === 'quiz' && '🧩'}
                         </div>
-                        <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                          <span className="badge-unlocked text-xs">{language === 'fr' ? '✅ Débloqué' : '✅ مفتوح'}</span>
-                          <span>• {new Date(item.grantedAt).toLocaleDateString()}</span>
+                        <div>
+                          <p className={`font-bold ${currentTheme.text}`}>{item.name}</p>
+                          <p className={`text-xs ${currentTheme.textSecondary} capitalize`}>{item.type}</p>
                         </div>
                       </div>
-                    );
-                  })}
+                      <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                        <span className="badge-unlocked text-xs">✅ {language === 'fr' ? 'Débloqué' : 'مفتوح'}</span>
+                        <span>• {new Date(item.grantedAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -370,7 +374,9 @@ export function UserDashboard() {
             <div className="animate-fadeInUp">
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-3xl floating">⭐</span>
-                <h2 className="text-2xl font-bold gradient-text">{language === 'fr' ? 'Contenu Premium Débloqué' : 'المحتوى المميز المفتوح'}</h2>
+                <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+                  {language === 'fr' ? 'Contenu Premium Débloqué' : 'المحتوى المميز المفتوح'}
+                </h2>
               </div>
               {unlockedCount === 0 ? (
                 <div className="text-center py-12">
@@ -390,7 +396,7 @@ export function UserDashboard() {
                     return (
                       <div 
                         key={item.id} 
-                        className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border-2 border-green-300 shadow-md hover-lift animate-fadeInUp"
+                        className={`${currentTheme.card} rounded-2xl p-4 border-2 border-green-300 shadow-md hover-lift animate-fadeInUp`}
                         style={{ animationDelay: `${index * 0.1}s` }}
                       >
                         <div className="flex items-center gap-3">
@@ -400,8 +406,8 @@ export function UserDashboard() {
                             {item.type === 'quiz' && '🧩'}
                           </div>
                           <div className="flex-1">
-                            <p className="font-bold text-gray-800 text-lg">{displayName}</p>
-                            <p className="text-xs text-gray-500 capitalize">{item.type}</p>
+                            <p className={`font-bold ${currentTheme.text} text-lg`}>{displayName}</p>
+                            <p className={`text-xs ${currentTheme.textSecondary} capitalize`}>{item.type}</p>
                           </div>
                         </div>
                         {fullItem && fullItem.imageUrl && (
@@ -445,10 +451,10 @@ export function UserDashboard() {
 
       {viewingStory && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-40 p-4 animate-fadeInUp">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 animate-scaleIn">
+          <div className={`${currentTheme.card} rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 animate-scaleIn border ${currentTheme.cardBorder}`}>
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">{getDisplayName(viewingStory)}</h2>
+                <h2 className={`text-2xl font-bold ${currentTheme.text}`}>{getDisplayName(viewingStory)}</h2>
               </div>
               <button onClick={() => setViewingStory(null)} className="text-gray-400 hover:text-gray-600 transition-all duration-300 hover:rotate-90">
                 <i className="fas fa-times text-2xl"></i>
@@ -458,7 +464,7 @@ export function UserDashboard() {
               <img src={viewingStory.imageUrl} alt={getDisplayName(viewingStory)} className="w-full h-64 object-cover rounded-2xl mb-4" />
             )}
             <div className="prose max-w-none">
-              <p className="text-gray-700 whitespace-pre-wrap text-lg">{getDisplayContent(viewingStory)}</p>
+              <p className={`${currentTheme.text} whitespace-pre-wrap text-lg`}>{getDisplayContent(viewingStory)}</p>
             </div>
           </div>
         </div>
