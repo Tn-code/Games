@@ -122,10 +122,12 @@ export function UserDashboard() {
   };
 
   const getDisplayName = (item) => {
-    return language === 'fr' ? item.name || item.title : item.nameArabic || item.titleArabic;
+    if (!item) return '';
+    return language === 'fr' ? (item.name || item.title) : (item.nameArabic || item.titleArabic);
   };
 
   const getDisplayContent = (item) => {
+    if (!item) return '';
     return language === 'fr' ? item.content : item.contentArabic;
   };
 

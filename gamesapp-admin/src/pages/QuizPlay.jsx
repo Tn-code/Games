@@ -10,8 +10,8 @@ export function QuizPlay({ quiz, onClose, language }) {
   if (!quiz || !quiz.questions || quiz.questions.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto text-center">
-        <p className="text-gray-500">Aucune question disponible</p>
-        <button onClick={onClose} className="mt-4 btn-primary">Fermer</button>
+        <p className="text-gray-500">{language === 'fr' ? 'Aucune question disponible' : 'لا توجد أسئلة'}</p>
+        <button onClick={onClose} className="mt-4 btn-primary">{language === 'fr' ? 'Fermer' : 'أغلق'}</button>
       </div>
     );
   }
@@ -20,14 +20,27 @@ export function QuizPlay({ quiz, onClose, language }) {
   if (!question) {
     return (
       <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto text-center">
-        <p className="text-gray-500">Question non trouvée</p>
-        <button onClick={onClose} className="mt-4 btn-primary">Fermer</button>
+        <p className="text-gray-500">{language === 'fr' ? 'Question non trouvée' : 'السؤال غير موجود'}</p>
+        <button onClick={onClose} className="mt-4 btn-primary">{language === 'fr' ? 'Fermer' : 'أغلق'}</button>
       </div>
     );
   }
 
-  const getDisplayText = (text, textAr) => {
-    return language === 'fr' ? text : textAr || text;
+  // Get text based on selected language - ONLY ONE LANGUAGE
+  const getQuestionText = () => {
+    return language === 'fr' ? question.question : question.questionArabic;
+  };
+
+  const getOptionText = (index) => {
+    return language === 'fr' ? question.options[index] : question.optionsArabic[index];
+  };
+
+  const getTitleText = () => {
+    return language === 'fr' ? quiz.title : quiz.titleArabic;
+  };
+
+  const getDescriptionText = () => {
+    return language === 'fr' ? quiz.description : quiz.descriptionArabic;
   };
 
   const handleAnswer = (index) => {
@@ -112,7 +125,7 @@ export function QuizPlay({ quiz, onClose, language }) {
   }
 
   const options = question.options || [];
-  const optionsArabic = question.optionsArabic || [];
+  const questionText = getQuestionText();
 
   return (
     <div className="bg-white rounded-2xl p-6 max-w-2xl mx-auto animate-scaleIn">
@@ -121,7 +134,7 @@ export function QuizPlay({ quiz, onClose, language }) {
         <div className="mb-4 rounded-xl overflow-hidden">
           <img 
             src={quiz.imageUrl} 
-            alt={getDisplayText(quiz.title, quiz.titleArabic)} 
+            alt={getTitleText()} 
             className="w-full h-48 object-cover"
           />
         </div>
@@ -133,7 +146,7 @@ export function QuizPlay({ quiz, onClose, language }) {
           <h3 className="text-lg font-semibold text-gray-800">
             {language === 'fr' ? 'Question' : 'سؤال'} {currentQuestion + 1} / {quiz.questions.length}
           </h3>
-          <p className="text-sm text-gray-500">{getDisplayText(quiz.title, quiz.titleArabic)}</p>
+          <p className="text-sm text-gray-500">{getTitleText()}</p>
         </div>
         <div className="px-4 py-2 bg-purple-100 rounded-lg animate-pulse">
           <i className="fas fa-star text-yellow-500 mr-2"></i>
@@ -149,56 +162,60 @@ export function QuizPlay({ quiz, onClose, language }) {
         ></div>
       </div>
 
-      {/* Question */}
+      {/* Question - Only in selected language */}
       <div className="mb-6 animate-fadeInUp">
-        <p className="text-xl font-medium text-gray-800">{getDisplayText(question.question, question.questionArabic)}</p>
+        <p className="text-xl font-medium text-gray-800">{questionText}</p>
       </div>
 
-      {/* Options */}
+      {/* Options - Only in selected language */}
       <div className="space-y-3">
-        {options.map((option, index) => (
-          <button
-            key={index}
-            onClick={() => handleAnswer(index)}
-            disabled={selectedAnswer !== null}
-            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 ${
-              selectedAnswer === null
-                ? 'border-gray-200 hover:border-purple-400 hover:bg-purple-50 hover:shadow-lg'
-                : selectedAnswer === index
-                ? question.correctAnswer === index
-                  ? 'border-green-500 bg-green-50 shadow-lg shadow-green-200'
-                  : 'border-red-500 bg-red-50 shadow-lg shadow-red-200'
-                : question.correctAnswer === index && selectedAnswer !== null
-                ? 'border-green-500 bg-green-50 shadow-lg shadow-green-200'
-                : 'border-gray-200 opacity-50'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-all duration-300 ${
+        {options.map((_, index) => {
+          const optionText = getOptionText(index);
+          // Skip empty options
+          if (!optionText) return null;
+          
+          return (
+            <button
+              key={index}
+              onClick={() => handleAnswer(index)}
+              disabled={selectedAnswer !== null}
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 ${
                 selectedAnswer === null
-                  ? 'bg-gray-100 text-gray-600'
-                  : selectedAnswer === index && question.correctAnswer === index
-                  ? 'bg-green-500 text-white'
-                  : selectedAnswer === index && question.correctAnswer !== index
-                  ? 'bg-red-500 text-white'
+                  ? 'border-gray-200 hover:border-purple-400 hover:bg-purple-50 hover:shadow-lg'
+                  : selectedAnswer === index
+                  ? question.correctAnswer === index
+                    ? 'border-green-500 bg-green-50 shadow-lg shadow-green-200'
+                    : 'border-red-500 bg-red-50 shadow-lg shadow-red-200'
                   : question.correctAnswer === index && selectedAnswer !== null
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-400'
-              }`}>
-                {String.fromCharCode(65 + index)}
-              </span>
-              <div className="flex-1">
-                <span className="text-gray-800">{getDisplayText(option, optionsArabic[index])}</span>
+                  ? 'border-green-500 bg-green-50 shadow-lg shadow-green-200'
+                  : 'border-gray-200 opacity-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-all duration-300 ${
+                  selectedAnswer === null
+                    ? 'bg-gray-100 text-gray-600'
+                    : selectedAnswer === index && question.correctAnswer === index
+                    ? 'bg-green-500 text-white'
+                    : selectedAnswer === index && question.correctAnswer !== index
+                    ? 'bg-red-500 text-white'
+                    : question.correctAnswer === index && selectedAnswer !== null
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-100 text-gray-400'
+                }`}>
+                  {String.fromCharCode(65 + index)}
+                </span>
+                <span className="text-gray-800">{optionText}</span>
+                {selectedAnswer !== null && index === question.correctAnswer && (
+                  <i className="fas fa-check-circle text-green-500 text-xl animate-bounceIn"></i>
+                )}
+                {selectedAnswer === index && index !== question.correctAnswer && (
+                  <i className="fas fa-times-circle text-red-500 text-xl animate-bounceIn"></i>
+                )}
               </div>
-              {selectedAnswer !== null && index === question.correctAnswer && (
-                <i className="fas fa-check-circle text-green-500 text-xl animate-bounceIn"></i>
-              )}
-              {selectedAnswer === index && index !== question.correctAnswer && (
-                <i className="fas fa-times-circle text-red-500 text-xl animate-bounceIn"></i>
-              )}
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
 
       {/* Next button */}
