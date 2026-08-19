@@ -9,6 +9,8 @@ import { QuizPlay } from './QuizPlay';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { Categories } from '../components/Categories';
 import { UserProgress } from '../components/UserProgress';
+import { Badges } from '../components/Badges';
+import { AdvancedSearch } from '../components/AdvancedSearch';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -34,6 +36,9 @@ export function UserDashboard() {
   const [unlockedItems, setUnlockedItems] = useState([]);
   const [language, setLanguage] = useState('fr');
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     if (!user) return;
@@ -103,19 +108,66 @@ export function UserDashboard() {
     return language === 'fr' ? item.content : item.contentArabic;
   };
 
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+
+  const handleFilter = (filter) => {
+    setFilterType(filter);
+  };
+
+  const handleSort = (sort) => {
+    setSortBy(sort);
+  };
+
   const filterByCategory = (items) => {
     if (!selectedCategory || selectedCategory === 'all') return items;
     return items.filter(item => item.category === selectedCategory);
   };
 
+  const getFilteredAndSortedItems = (items) => {
+    let filtered = items;
+    
+    if (searchTerm) {
+      filtered = filtered.filter(item => 
+        (item.name || item.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.nameArabic || item.titleArabic || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    if (filterType !== 'all') {
+      filtered = filtered.filter(item => item.type === filterType);
+    }
+    
+    switch(sortBy) {
+      case 'newest':
+        filtered = [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      case 'oldest':
+        filtered = [...filtered].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        break;
+      case 'popular':
+        filtered = [...filtered].sort((a, b) => (b.views || 0) - (a.views || 0));
+        break;
+      case 'az':
+        filtered = [...filtered].sort((a, b) => ((a.name || a.title) || '').localeCompare((b.name || b.title) || ''));
+        break;
+      default:
+        break;
+    }
+    
+    return filtered;
+  };
+
   const renderContent = (items, type, icon, color) => {
-    const filteredItems = filterByCategory(items);
+    const filteredItems = getFilteredAndSortedItems(filterByCategory(items));
+    
     if (filteredItems.length === 0) {
       return (
         <div className="text-center py-12 animate-fadeInUp">
           <i className={`fas ${icon} text-6xl text-gray-300 mb-4 floating`}></i>
           <p className="text-gray-500">
-            {language === 'fr' ? `Aucun ${type} dans cette catégorie` : `لا يوجد ${type === 'story' ? 'قصص' : type === 'video' ? 'فيديوهات' : 'اختبارات'} في هذا التصنيف`}
+            {language === 'fr' ? `Aucun ${type} trouvé` : `لا يوجد ${type === 'story' ? 'قصص' : type === 'video' ? 'فيديوهات' : 'اختبارات'}`}
           </p>
         </div>
       );
@@ -260,8 +312,8 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {/* User Progress */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* User Progress & Badges */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
         <UserProgress stats={{
           storiesRead: unlockedContent.filter(i => i.type === 'story').length,
           totalStories: stories.length || 10,
@@ -271,6 +323,14 @@ export function UserDashboard() {
           totalVideos: videos.length || 8,
           points: unlockedContent.length * 10,
           totalPoints: (stories.length + quizzes.length + videos.length) * 10 || 1000,
+        }} />
+        
+        <Badges stats={{
+          storiesRead: unlockedContent.filter(i => i.type === 'story').length,
+          quizzesCompleted: unlockedContent.filter(i => i.type === 'quiz').length,
+          videosWatched: unlockedContent.filter(i => i.type === 'video').length,
+          totalPoints: unlockedContent.length * 10,
+          premiumUnlocked: unlockedContent.length,
         }} />
       </div>
 
@@ -316,6 +376,15 @@ export function UserDashboard() {
             </button>
           )}
         </div>
+
+        {/* Advanced Search */}
+        {(activeTab === 'stories' || activeTab === 'videos' || activeTab === 'quizzes') && (
+          <AdvancedSearch 
+            onSearch={handleSearch}
+            onFilter={handleFilter}
+            onSort={handleSort}
+          />
+        )}
 
         {/* Categories */}
         {(activeTab === 'stories' || activeTab === 'videos' || activeTab === 'quizzes') && (
