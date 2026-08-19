@@ -77,8 +77,19 @@ export function UserDashboard() {
   const userData = currentUserData || userFromList;
   const unlockedContent = userData?.unlockedContent || [];
 
-  const hasAccess = (itemId) => {
-    return unlockedContent.some(item => item.id === itemId);
+  // Check if user has subscription
+  const isSubscribed = () => {
+    return userData?.isSubscribed === true;
+  };
+
+  const hasAccess = (itemId, itemType) => {
+    // If user has subscription, they have access to ALL premium content
+    if (isSubscribed()) {
+      return true;
+    }
+    // Otherwise check if the specific item is unlocked
+    const unlocked = userData?.unlockedContent || [];
+    return unlocked.some(item => item.id === itemId && item.type === itemType);
   };
 
   const handlePremiumRequest = (item, type) => {
@@ -95,7 +106,7 @@ export function UserDashboard() {
   };
 
   const handleViewContent = (item, type) => {
-    const hasAccess_ = hasAccess(item.id);
+    const hasAccess_ = hasAccess(item.id, type);
     if (item.type === 'premium' && !hasAccess_) {
       handlePremiumRequest(item, type);
       return;
@@ -186,8 +197,10 @@ export function UserDashboard() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredItems.map((item, index) => {
-          const isUnlocked = hasAccess(item.id);
-          const isLocked = item.type === 'premium' && !isUnlocked;
+          const hasAccess_ = hasAccess(item.id, type);
+          const isLocked = item.type === 'premium' && !hasAccess_;
+          const isUnlocked = item.type === 'premium' && hasAccess_;
+          const isFree = item.type === 'free';
           const displayName = getDisplayName(item);
           
           return (
@@ -213,19 +226,24 @@ export function UserDashboard() {
                   </div>
                 )}
                 <div className="absolute top-3 right-3 flex gap-2 flex-wrap">
-                  {item.type === 'premium' && (
+                  {item.type === 'premium' && !isFree && (
                     <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                      ⭐ {language === 'fr' ? 'Premium' : 'مميز'}
+                      ⭐ Premium
                     </span>
                   )}
                   {isLocked && (
                     <span className="px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-xs font-bold shadow-lg">
-                      🔒 {language === 'fr' ? 'Fermé' : 'مغلق'}
+                      🔒 Fermé
                     </span>
                   )}
                   {isUnlocked && (
                     <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full text-xs font-bold shadow-lg animate-bounceIn">
-                      ✅ {language === 'fr' ? 'Débloqué' : 'مفتوح'}
+                      ✅ Débloqué
+                    </span>
+                  )}
+                  {isFree && (
+                    <span className="px-3 py-1 bg-gradient-to-r from-blue-400 to-blue-500 text-white rounded-full text-xs font-bold shadow-lg">
+                      📖 Gratuit
                     </span>
                   )}
                 </div>
@@ -238,18 +256,19 @@ export function UserDashboard() {
                   className={`mt-3 w-full py-2.5 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 ${
                     isLocked
                       ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-600/30'
-                      : isUnlocked
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:shadow-lg hover:shadow-green-500/30'
-                      : type === 'video'
-                      ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:shadow-lg hover:shadow-red-500/30'
-                      : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-lg hover:shadow-blue-500/30'
+                      : isUnlocked || isFree
+                      ? type === 'video'
+                        ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:shadow-lg hover:shadow-red-500/30'
+                        : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-lg hover:shadow-blue-500/30'
+                      : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-not-allowed'
                   }`}
                 >
-                  {isLocked ? (language === 'fr' ? '⭐ Demander Premium' : '⭐ طلب مميز') : 
-                   isUnlocked ? (language === 'fr' ? '✅ Accès Accordé' : '✅ تم الفتح') : 
-                   type === 'story' ? (language === 'fr' ? '📖 Lire' : '📖 اقرأ') : 
-                   type === 'quiz' ? (language === 'fr' ? '🧠 Jouer' : '🧠 العب') : 
-                   (language === 'fr' ? '▶️ Regarder' : '▶️ شاهد')}
+                  {isLocked ? '⭐ Demander Premium' : 
+                   isUnlocked ? '✅ Accès Accordé' : 
+                   isFree ? (type === 'story' ? '📖 Lire' : 
+                           type === 'quiz' ? '🧠 Jouer' : 
+                           '▶️ Regarder') :
+                   '🔒 Verrouillé'}
                 </button>
               </div>
             </div>
@@ -559,3 +578,5 @@ export function UserDashboard() {
     </div>
   );
 }
+
+export default UserDashboard;

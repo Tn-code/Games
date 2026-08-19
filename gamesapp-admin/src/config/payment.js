@@ -1,22 +1,30 @@
-// Payment configuration with Tunisian Dinar
+// Payment configuration with Tunisian Dinar (TND)
 export const PAYMENT_CONFIG = {
   currency: 'TND',
   currencySymbol: 'DT',
-  exchangeRate: 1, // 1 TND = 1 TND
   
   // Premium prices in TND
   prices: {
     story: {
-      premium: 4.99,
-      label: '4.99 DT'
+      premium: 1,
+      label: '1 DT'
     },
     video: {
-      premium: 5.99,
-      label: '5.99 DT'
+      premium: 1,
+      label: '1 DT'
     },
     quiz: {
-      premium: 3.99,
-      label: '3.99 DT'
+      premium: 1,
+      label: '1 DT'
+    }
+  },
+  
+  // Monthly subscription
+  subscription: {
+    monthly: {
+      price: 10,
+      label: '10 DT / mois',
+      description: 'Accès illimité à tout le contenu premium'
     }
   },
   
@@ -41,7 +49,8 @@ export const PREMIUM_TYPES = {
 
 // Price labels for display
 export const PRICE_LABELS = {
-  'story': '4.99 DT',
-  'video': '5.99 DT',
-  'quiz': '3.99 DT'
+  'story': '1 DT',
+  'video': '1 DT',
+  'quiz': '1 DT',
+  'subscription': '10 DT / mois'
 };
