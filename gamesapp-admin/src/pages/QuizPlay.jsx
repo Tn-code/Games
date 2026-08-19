@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export function QuizPlay({ quiz, onClose }) {
+export function QuizPlay({ quiz, onClose, language }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [score, setScore] = useState(0);
@@ -10,8 +10,8 @@ export function QuizPlay({ quiz, onClose }) {
   if (!quiz || !quiz.questions || quiz.questions.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto text-center">
-        <p className="text-gray-500">No questions available</p>
-        <button onClick={onClose} className="mt-4 btn-primary">Close</button>
+        <p className="text-gray-500">Aucune question disponible</p>
+        <button onClick={onClose} className="mt-4 btn-primary">Fermer</button>
       </div>
     );
   }
@@ -20,11 +20,15 @@ export function QuizPlay({ quiz, onClose }) {
   if (!question) {
     return (
       <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto text-center">
-        <p className="text-gray-500">Question not found</p>
-        <button onClick={onClose} className="mt-4 btn-primary">Close</button>
+        <p className="text-gray-500">Question non trouvée</p>
+        <button onClick={onClose} className="mt-4 btn-primary">Fermer</button>
       </div>
     );
   }
+
+  const getDisplayText = (text, textAr) => {
+    return language === 'fr' ? text : textAr || text;
+  };
 
   const handleAnswer = (index) => {
     if (selectedAnswer !== null) return;
@@ -74,27 +78,33 @@ export function QuizPlay({ quiz, onClose }) {
               <div className="text-6xl floating">📚</div>
             )}
           </div>
-          <h3 className="text-2xl font-bold text-gray-800 animate-fadeInUp">Quiz Complete! 🎉</h3>
-          <p className="text-gray-500 mt-2 animate-fadeInUp delay-200">You scored <span className="text-2xl font-bold text-purple-600">{score}</span> points</p>
+          <h3 className="text-2xl font-bold text-gray-800 animate-fadeInUp">
+            {language === 'fr' ? 'Quiz Terminé ! 🎉' : 'انتهى الاختبار! 🎉'}
+          </h3>
+          <p className="text-gray-500 mt-2 animate-fadeInUp delay-200">
+            {language === 'fr' ? 'Vous avez marqué' : 'لقد حصلت على'}{' '}
+            <span className="text-2xl font-bold text-purple-600">{score}</span>{' '}
+            {language === 'fr' ? 'points' : 'نقطة'}
+          </p>
           <div className="mt-4 p-4 bg-gray-50 rounded-xl grid grid-cols-3 gap-4 animate-fadeInUp delay-300">
             <div>
               <p className="text-2xl font-bold text-green-600">{correctCount}</p>
-              <p className="text-sm text-gray-500">Correct</p>
+              <p className="text-sm text-gray-500">{language === 'fr' ? 'Correctes' : 'صحيحة'}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-red-600">{totalQuestions - correctCount}</p>
-              <p className="text-sm text-gray-500">Wrong</p>
+              <p className="text-sm text-gray-500">{language === 'fr' ? 'Fausses' : 'خاطئة'}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-blue-600">{percentage}%</p>
-              <p className="text-sm text-gray-500">Score</p>
+              <p className="text-sm text-gray-500">{language === 'fr' ? 'Score' : 'النتيجة'}</p>
             </div>
           </div>
           <div className="mt-6 flex gap-3 justify-center">
             <button onClick={handleRestart} className="btn-primary flex items-center gap-2">
-              <i className="fas fa-redo"></i>Try Again
+              <i className="fas fa-redo"></i>{language === 'fr' ? 'Recommencer' : 'أعد المحاولة'}
             </button>
-            <button onClick={onClose} className="btn-secondary">Close</button>
+            <button onClick={onClose} className="btn-secondary">{language === 'fr' ? 'Fermer' : 'أغلق'}</button>
           </div>
         </div>
       </div>
@@ -106,13 +116,24 @@ export function QuizPlay({ quiz, onClose }) {
 
   return (
     <div className="bg-white rounded-2xl p-6 max-w-2xl mx-auto animate-scaleIn">
+      {/* Quiz Image */}
+      {quiz.imageUrl && (
+        <div className="mb-4 rounded-xl overflow-hidden">
+          <img 
+            src={quiz.imageUrl} 
+            alt={getDisplayText(quiz.title, quiz.titleArabic)} 
+            className="w-full h-48 object-cover"
+          />
+        </div>
+      )}
+
       {/* Progress */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800">
-            Question {currentQuestion + 1} of {quiz.questions.length}
+            {language === 'fr' ? 'Question' : 'سؤال'} {currentQuestion + 1} / {quiz.questions.length}
           </h3>
-          <p className="text-sm text-gray-500">{quiz.title}</p>
+          <p className="text-sm text-gray-500">{getDisplayText(quiz.title, quiz.titleArabic)}</p>
         </div>
         <div className="px-4 py-2 bg-purple-100 rounded-lg animate-pulse">
           <i className="fas fa-star text-yellow-500 mr-2"></i>
@@ -130,10 +151,7 @@ export function QuizPlay({ quiz, onClose }) {
 
       {/* Question */}
       <div className="mb-6 animate-fadeInUp">
-        <p className="text-xl font-medium text-gray-800">{question.question}</p>
-        {question.questionArabic && (
-          <p className="text-gray-500 text-sm mt-1" dir="rtl">{question.questionArabic}</p>
-        )}
+        <p className="text-xl font-medium text-gray-800">{getDisplayText(question.question, question.questionArabic)}</p>
       </div>
 
       {/* Options */}
@@ -170,10 +188,7 @@ export function QuizPlay({ quiz, onClose }) {
                 {String.fromCharCode(65 + index)}
               </span>
               <div className="flex-1">
-                <span className="text-gray-800">{option}</span>
-                {optionsArabic[index] && (
-                  <p className="text-gray-500 text-sm" dir="rtl">{optionsArabic[index]}</p>
-                )}
+                <span className="text-gray-800">{getDisplayText(option, optionsArabic[index])}</span>
               </div>
               {selectedAnswer !== null && index === question.correctAnswer && (
                 <i className="fas fa-check-circle text-green-500 text-xl animate-bounceIn"></i>
@@ -199,11 +214,11 @@ export function QuizPlay({ quiz, onClose }) {
         >
           {currentQuestion < quiz.questions.length - 1 ? (
             <>
-              Next Question <i className="fas fa-arrow-right ml-2"></i>
+              {language === 'fr' ? 'Question suivante' : 'السؤال التالي'} <i className="fas fa-arrow-right ml-2"></i>
             </>
           ) : (
             <>
-              See Results <i className="fas fa-trophy ml-2"></i>
+              {language === 'fr' ? 'Voir les résultats' : 'عرض النتائج'} <i className="fas fa-trophy ml-2"></i>
             </>
           )}
         </button>

@@ -8,6 +8,7 @@ export function CreateQuiz() {
     titleArabic: '',
     description: '',
     descriptionArabic: '',
+    imageUrl: '',
     category: 'education',
     difficulty: 'easy',
     timeLimit: 5,
@@ -132,13 +133,13 @@ export function CreateQuiz() {
     setLoading(true);
 
     if (!formData.title || !formData.titleArabic) {
-      showToast('⚠️ Please enter quiz title in both languages', 'error');
+      showToast('⚠️ Veuillez entrer le titre du quiz dans les deux langues', 'error');
       setLoading(false);
       return;
     }
 
     if (!formData.description || !formData.descriptionArabic) {
-      showToast('⚠️ Please enter description in both languages', 'error');
+      showToast('⚠️ Veuillez entrer la description dans les deux langues', 'error');
       setLoading(false);
       return;
     }
@@ -146,20 +147,20 @@ export function CreateQuiz() {
     for (let i = 0; i < formData.questions.length; i++) {
       const q = formData.questions[i];
       if (!q.question || !q.questionArabic) {
-        showToast(`⚠️ Please fill question ${i + 1} in both languages`, 'error');
+        showToast(`⚠️ Veuillez remplir la question ${i + 1} dans les deux langues`, 'error');
         setLoading(false);
         return;
       }
       
       const filledOptions = q.options.filter(opt => opt.trim() !== '');
       if (filledOptions.length < 2) {
-        showToast(`⚠️ Question ${i + 1} needs at least 2 options`, 'error');
+        showToast(`⚠️ La question ${i + 1} nécessite au moins 2 options`, 'error');
         setLoading(false);
         return;
       }
       
       if (q.correctAnswer === null || q.correctAnswer === undefined) {
-        showToast(`⚠️ Please select the correct answer for question ${i + 1}`, 'error');
+        showToast(`⚠️ Veuillez sélectionner la bonne réponse pour la question ${i + 1}`, 'error');
         setLoading(false);
         return;
       }
@@ -175,7 +176,7 @@ export function CreateQuiz() {
       const result = await addItem(quizData);
       
       if (result.success) {
-        showToast('✅ Quiz created successfully!', 'success');
+        showToast('✅ Quiz créé avec succès!', 'success');
         const options = Array(optionCount).fill('');
         const optionsArabic = Array(optionCount).fill('');
         setFormData({
@@ -183,6 +184,7 @@ export function CreateQuiz() {
           titleArabic: '',
           description: '',
           descriptionArabic: '',
+          imageUrl: '',
           category: 'education',
           difficulty: 'easy',
           timeLimit: 5,
@@ -199,10 +201,10 @@ export function CreateQuiz() {
           ]
         });
       } else {
-        showToast(`❌ Error: ${result.error}`, 'error');
+        showToast(`❌ Erreur: ${result.error}`, 'error');
       }
     } catch (error) {
-      showToast(`❌ Error: ${error.message}`, 'error');
+      showToast(`❌ Erreur: ${error.message}`, 'error');
     }
     setLoading(false);
   };
@@ -212,7 +214,7 @@ export function CreateQuiz() {
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3 animate-fadeInDown">
           <i className="fas fa-plus-circle text-purple-600"></i>
-          Create New Quiz
+          Créer un Quiz
         </h2>
 
         <form onSubmit={handleSubmit} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 animate-fadeInUp">
@@ -221,7 +223,7 @@ export function CreateQuiz() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-font text-blue-500 mr-2"></i>
-                Quiz Title (French) *
+                Titre (Français) *
               </label>
               <input
                 type="text"
@@ -229,7 +231,7 @@ export function CreateQuiz() {
                 value={formData.title}
                 onChange={handleChange}
                 className="input-field"
-                placeholder="Ex: General Knowledge Quiz"
+                placeholder="Ex: Quiz de Connaissances Générales"
                 required
               />
             </div>
@@ -238,7 +240,7 @@ export function CreateQuiz() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-font text-green-500 mr-2"></i>
-                Quiz Title (Arabic) *
+                Titre (Arabe) *
               </label>
               <input
                 type="text"
@@ -252,44 +254,40 @@ export function CreateQuiz() {
               />
             </div>
 
-            {/* Description - French */}
+            {/* Image URL */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                <i className="fas fa-align-left text-blue-500 mr-2"></i>
-                Description (French) *
+                <i className="fas fa-image text-purple-500 mr-2"></i>
+                Image du Quiz (URL)
               </label>
-              <textarea
-                name="description"
-                value={formData.description}
+              <input
+                type="url"
+                name="imageUrl"
+                value={formData.imageUrl}
                 onChange={handleChange}
-                className="input-field min-h-[80px]"
-                placeholder="Describe your quiz in French..."
-                required
+                className="input-field"
+                placeholder="https://example.com/quiz-image.jpg"
               />
-            </div>
-
-            {/* Description - Arabic */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <i className="fas fa-align-right text-green-500 mr-2"></i>
-                Description (Arabic) *
-              </label>
-              <textarea
-                name="descriptionArabic"
-                value={formData.descriptionArabic}
-                onChange={handleChange}
-                className="input-field min-h-[80px]"
-                placeholder="وصف الاختبار بالعربية..."
-                dir="rtl"
-                required
-              />
+              {formData.imageUrl && (
+                <div className="mt-3">
+                  <p className="text-xs text-gray-500 mb-2">Aperçu:</p>
+                  <img 
+                    src={formData.imageUrl} 
+                    alt="Quiz preview" 
+                    className="h-32 w-auto rounded-xl border border-gray-200 object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/300x200/cccccc/666666?text=Image+non+disponible';
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Category */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-tags text-yellow-500 mr-2"></i>
-                Category *
+                Catégorie *
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {categories.map((cat) => (
@@ -312,11 +310,44 @@ export function CreateQuiz() {
               </div>
             </div>
 
+            {/* Description - French */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <i className="fas fa-align-left text-blue-500 mr-2"></i>
+                Description (Français) *
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                className="input-field min-h-[80px]"
+                placeholder="Décrivez votre quiz en français..."
+                required
+              />
+            </div>
+
+            {/* Description - Arabic */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <i className="fas fa-align-right text-green-500 mr-2"></i>
+                Description (Arabe) *
+              </label>
+              <textarea
+                name="descriptionArabic"
+                value={formData.descriptionArabic}
+                onChange={handleChange}
+                className="input-field min-h-[80px]"
+                placeholder="وصف الاختبار بالعربية..."
+                dir="rtl"
+                required
+              />
+            </div>
+
             {/* Quiz Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-tag text-yellow-500 mr-2"></i>
-                Quiz Type
+                Type de Quiz
               </label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-all">
@@ -328,7 +359,7 @@ export function CreateQuiz() {
                     onChange={handleChange}
                     className="w-4 h-4 text-green-600"
                   />
-                  <span className="font-medium">📖 Free</span>
+                  <span className="font-medium">📖 Gratuit</span>
                 </label>
                 <label className="flex items-center gap-2 p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-all">
                   <input
@@ -348,7 +379,7 @@ export function CreateQuiz() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-signal text-yellow-500 mr-2"></i>
-                Difficulty
+                Difficulté
               </label>
               <select
                 name="difficulty"
@@ -356,16 +387,16 @@ export function CreateQuiz() {
                 onChange={handleChange}
                 className="input-field"
               >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
+                <option value="easy">Facile</option>
+                <option value="medium">Moyen</option>
+                <option value="hard">Difficile</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-clock text-blue-500 mr-2"></i>
-                Time Limit (minutes)
+                Temps (minutes)
               </label>
               <input
                 type="number"
@@ -381,7 +412,7 @@ export function CreateQuiz() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-star text-yellow-500 mr-2"></i>
-                Points per Question
+                Points par Question
               </label>
               <input
                 type="number"
@@ -397,7 +428,7 @@ export function CreateQuiz() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <i className="fas fa-list-ol text-purple-500 mr-2"></i>
-                Options per Question
+                Options par Question
               </label>
               <select
                 value={optionCount}
@@ -423,7 +454,7 @@ export function CreateQuiz() {
                 className="btn-primary text-sm flex items-center gap-2"
               >
                 <i className="fas fa-plus"></i>
-                Add Question
+                Ajouter une Question
               </button>
             </div>
 
@@ -437,24 +468,25 @@ export function CreateQuiz() {
                       onClick={() => removeQuestion(qIndex)}
                       className="text-red-500 hover:text-red-700 transition-all duration-300 hover:scale-110"
                     >
-                      <i className="fas fa-times"></i> Remove
+                      <i className="fas fa-times"></i> Supprimer
                     </button>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Question French */}
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Question (French) *</label>
+                    <label className="block text-sm text-gray-600 mb-1">Question (Français) *</label>
                     <input
                       type="text"
                       value={q.question}
                       onChange={(e) => handleQuestionChange(qIndex, 'question', e.target.value)}
                       className="input-field"
-                      placeholder="Enter question in French"
+                      placeholder="Entrez la question en français"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Question (Arabic) *</label>
+                    <label className="block text-sm text-gray-600 mb-1">Question (Arabe) *</label>
                     <input
                       type="text"
                       value={q.questionArabic}
@@ -468,7 +500,7 @@ export function CreateQuiz() {
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       <i className="fas fa-list-ul text-purple-500 mr-2"></i>
-                      Options * <span className="text-xs text-gray-400">(Select the correct answer)</span>
+                      Options * <span className="text-xs text-gray-400">(Sélectionnez la bonne réponse)</span>
                     </label>
                     <div className="grid grid-cols-1 gap-3">
                       {q.options.map((_, oIndex) => (
@@ -536,12 +568,12 @@ export function CreateQuiz() {
             {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Creating Quiz...
+                Création en cours...
               </>
             ) : (
               <>
                 <i className="fas fa-plus-circle"></i>
-                Create Quiz
+                Créer le Quiz
               </>
             )}
           </button>
