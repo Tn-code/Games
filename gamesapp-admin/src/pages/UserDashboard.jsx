@@ -12,6 +12,7 @@ import { UserProgress } from '../components/UserProgress';
 import { Badges } from '../components/Badges';
 import { AdvancedSearch } from '../components/AdvancedSearch';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { UserProfile } from '../components/UserProfile';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -39,6 +40,7 @@ export function UserDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -61,6 +63,14 @@ export function UserDashboard() {
 
   if (storiesLoading || videosLoading || quizzesLoading || usersLoading) {
     return <LoadingSpinner />;
+  }
+
+  if (showProfile) {
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeInUp">
+        <UserProfile onClose={() => setShowProfile(false)} />
+      </div>
+    );
   }
 
   const userFromList = users.find(u => u.uid === user?.uid);
@@ -287,16 +297,18 @@ export function UserDashboard() {
                 </button>
               )}
               <div className={`flex items-center gap-2 ${currentTheme.card} rounded-full px-3 py-1 border ${currentTheme.cardBorder}`}>
-                {user?.photoURL ? (
-                  <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border-2 border-purple-400" />
-                ) : (
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-blue-400 rounded-full flex items-center justify-center text-white">
-                    <i className="fas fa-user"></i>
-                  </div>
-                )}
-                <span className={`text-sm font-medium ${currentTheme.text} hidden sm:block`}>
-                  {user?.displayName || user?.email?.split('@')[0] || 'User'}
-                </span>
+                <button onClick={() => setShowProfile(true)} className="flex items-center gap-2 hover:opacity-80 transition-all">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border-2 border-purple-400" />
+                  ) : (
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-blue-400 rounded-full flex items-center justify-center text-white">
+                      <i className="fas fa-user"></i>
+                    </div>
+                  )}
+                  <span className={`text-sm font-medium ${currentTheme.text} hidden sm:block`}>
+                    {user?.displayName || user?.email?.split('@')[0] || 'User'}
+                  </span>
+                </button>
               </div>
               <button 
                 onClick={() => {

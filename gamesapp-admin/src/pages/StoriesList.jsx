@@ -2,6 +2,7 @@ import React from 'react';
 import { useFirestore } from '../hooks/useFirestore';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ShareContent } from '../components/ShareContent';
 
 const getCategoryLabel = (category) => {
   const categories = {
@@ -50,7 +51,7 @@ export function StoriesList() {
                     {getCategoryLabel(story.category)}
                   </span>
                 </div>
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex gap-2 flex-wrap">
                   <button 
                     onClick={() => navigate(`/edit-story/${story.id}`)}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-medium"
@@ -63,6 +64,7 @@ export function StoriesList() {
                   >
                     <i className="fas fa-trash"></i>
                   </button>
+                  <ShareContent title={story.name} type="story" />
                 </div>
               </div>
             </div>

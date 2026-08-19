@@ -2,6 +2,7 @@ import React from 'react';
 import { useFirestore } from '../hooks/useFirestore';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ShareContent } from '../components/ShareContent';
 
 const getCategoryLabel = (category) => {
   const categories = {
@@ -75,11 +76,7 @@ export function VideoStoriesList() {
                   {video.description && (
                     <p className="text-sm text-gray-600 mt-2 line-clamp-2">{video.description}</p>
                   )}
-                  <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                    <span><i className="fas fa-clock mr-1"></i>{video.duration || 'N/A'}</span>
-                    <span><i className="fas fa-eye mr-1"></i>{video.views || 0} views</span>
-                  </div>
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex gap-2 flex-wrap">
                     <button 
                       onClick={() => navigate(`/edit-video/${video.id}`)}
                       className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-sm font-medium"
@@ -92,6 +89,7 @@ export function VideoStoriesList() {
                     >
                       <i className="fas fa-trash"></i>
                     </button>
+                    <ShareContent title={video.title} type="video" />
                   </div>
                 </div>
               </div>
