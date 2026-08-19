@@ -13,6 +13,7 @@ import { Badges } from '../components/Badges';
 import { AdvancedSearch } from '../components/AdvancedSearch';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { UserProfile } from '../components/UserProfile';
+import { Comments } from '../components/Comments';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -77,17 +78,14 @@ export function UserDashboard() {
   const userData = currentUserData || userFromList;
   const unlockedContent = userData?.unlockedContent || [];
 
-  // Check if user has subscription
   const isSubscribed = () => {
     return userData?.isSubscribed === true;
   };
 
   const hasAccess = (itemId, itemType) => {
-    // If user has subscription, they have access to ALL premium content
     if (isSubscribed()) {
       return true;
     }
-    // Otherwise check if the specific item is unlocked
     const unlocked = userData?.unlockedContent || [];
     return unlocked.some(item => item.id === itemId && item.type === itemType);
   };
@@ -226,7 +224,7 @@ export function UserDashboard() {
                   </div>
                 )}
                 <div className="absolute top-3 right-3 flex gap-2 flex-wrap">
-                  {item.type === 'premium' && !isFree && (
+                  {item.type === 'premium' && (
                     <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 rounded-full text-xs font-bold shadow-lg animate-pulse">
                       ⭐ Premium
                     </span>
@@ -280,7 +278,6 @@ export function UserDashboard() {
 
   return (
     <div className="user-bg min-h-screen transition-all duration-500">
-      {/* Navigation */}
       <nav className={`${currentTheme.navbar} sticky top-0 z-10 border-b ${currentTheme.cardBorder} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -312,7 +309,7 @@ export function UserDashboard() {
                   className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 animate-pulse"
                 >
                   <span className="text-lg">⭐</span>
-                  {unlockedCount} {language === 'fr' ? 'Débloqués' : 'مفتوحة'}
+                  {unlockedCount} Débloqués
                 </button>
               )}
               <div className={`flex items-center gap-2 ${currentTheme.card} rounded-full px-3 py-1 border ${currentTheme.cardBorder}`}>
@@ -343,7 +340,6 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {/* User Progress & Badges */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
         <UserProgress stats={{
           storiesRead: unlockedContent.filter(i => i.type === 'story').length,
@@ -365,7 +361,6 @@ export function UserDashboard() {
         }} />
       </div>
 
-      {/* Tabs and Categories */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex gap-2 mb-4 flex-wrap animate-fadeInDown">
           {['stories', 'videos', 'quizzes', 'library'].map((tab, index) => {
@@ -400,7 +395,7 @@ export function UserDashboard() {
               }`}
             >
               <span className="text-2xl mr-2">⭐</span>
-              {language === 'fr' ? 'Premium Débloqué' : 'المميز المفتوح'}
+              Premium Débloqué
               <span className="ml-2 bg-white text-green-600 px-2 py-0.5 rounded-full text-xs font-bold">
                 {unlockedCount}
               </span>
@@ -408,7 +403,6 @@ export function UserDashboard() {
           )}
         </div>
 
-        {/* Advanced Search */}
         {(activeTab === 'stories' || activeTab === 'videos' || activeTab === 'quizzes') && (
           <AdvancedSearch 
             onSearch={handleSearch}
@@ -417,12 +411,10 @@ export function UserDashboard() {
           />
         )}
 
-        {/* Categories */}
         {(activeTab === 'stories' || activeTab === 'videos' || activeTab === 'quizzes') && (
           <Categories selected={selectedCategory} onSelect={setSelectedCategory} />
         )}
 
-        {/* Content */}
         <div className={`${currentTheme.card} rounded-3xl shadow-xl p-6 border ${currentTheme.cardBorder} animate-fadeInUp`}>
           {activeTab === 'stories' && renderContent(stories, 'story', 'fa-book', 'bg-blue-100')}
           {activeTab === 'videos' && renderContent(videos, 'video', 'fa-video', 'bg-red-100')}
@@ -431,13 +423,13 @@ export function UserDashboard() {
           {activeTab === 'library' && (
             <div className="animate-fadeInUp">
               <h2 className={`text-2xl font-bold ${currentTheme.text} mb-4`}>
-                {language === 'fr' ? '📂 Ma Bibliothèque' : '📂 مكتبتي'}
+                📂 Ma Bibliothèque
               </h2>
               {unlockedCount === 0 ? (
                 <div className="text-center py-12">
                   <i className="fas fa-folder-open text-6xl text-gray-300 mb-4 floating"></i>
-                  <p className="text-gray-500">{language === 'fr' ? 'Votre bibliothèque est vide' : 'مكتبتك فارغة'}</p>
-                  <p className="text-sm text-gray-400 mt-2">{language === 'fr' ? 'Demandez du contenu premium pour construire votre bibliothèque!' : 'اطلب محتوى مميز لبناء مكتبتك!'}</p>
+                  <p className="text-gray-500">Votre bibliothèque est vide</p>
+                  <p className="text-sm text-gray-400 mt-2">Demandez du contenu premium pour construire votre bibliothèque!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -459,7 +451,7 @@ export function UserDashboard() {
                         </div>
                       </div>
                       <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                        <span className="badge-unlocked text-xs">✅ {language === 'fr' ? 'Débloqué' : 'مفتوح'}</span>
+                        <span className="badge-unlocked text-xs">✅ Débloqué</span>
                         <span>• {new Date(item.grantedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -469,20 +461,19 @@ export function UserDashboard() {
             </div>
           )}
 
-          {/* Premium Unlock Tab */}
           {activeTab === 'premium-unlock' && (
             <div className="animate-fadeInUp">
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-3xl floating">⭐</span>
                 <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
-                  {language === 'fr' ? 'Contenu Premium Débloqué' : 'المحتوى المميز المفتوح'}
+                  Contenu Premium Débloqué
                 </h2>
               </div>
               {unlockedCount === 0 ? (
                 <div className="text-center py-12">
                   <i className="fas fa-star text-6xl text-gray-300 mb-4 floating"></i>
-                  <p className="text-gray-500">{language === 'fr' ? 'Aucun contenu premium débloqué' : 'لا يوجد محتوى مميز مفتوح'}</p>
-                  <p className="text-sm text-gray-400 mt-2">{language === 'fr' ? 'Demandez du contenu premium pour débloquer!' : 'اطلب محتوى مميز لفتحه!'}</p>
+                  <p className="text-gray-500">Aucun contenu premium débloqué</p>
+                  <p className="text-sm text-gray-400 mt-2">Demandez du contenu premium pour débloquer!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -514,7 +505,7 @@ export function UserDashboard() {
                           <img src={fullItem.imageUrl} alt={displayName} className="w-full h-32 object-cover rounded-xl mt-3 transition-transform duration-300 hover:scale-105" />
                         )}
                         <div className="mt-3 flex items-center gap-3 text-xs">
-                          <span className="badge-unlocked">{language === 'fr' ? '✅ Débloqué' : '✅ مفتوح'}</span>
+                          <span className="badge-unlocked">✅ Débloqué</span>
                           <span className="text-gray-500">
                             {new Date(item.grantedAt).toLocaleDateString()}
                           </span>
@@ -527,9 +518,9 @@ export function UserDashboard() {
                           }}
                           className="mt-3 w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2 rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95 font-medium"
                         >
-                          {item.type === 'story' ? (language === 'fr' ? '📖 Lire' : '📖 اقرأ') : 
-                           item.type === 'video' ? (language === 'fr' ? '▶️ Regarder' : '▶️ شاهد') : 
-                           (language === 'fr' ? '🧠 Jouer' : '🧠 العب')}
+                          {item.type === 'story' ? '📖 Lire' : 
+                           item.type === 'video' ? '▶️ Regarder' : 
+                           '🧠 Jouer'}
                         </button>
                       </div>
                     );
@@ -566,6 +557,9 @@ export function UserDashboard() {
             <div className="prose max-w-none">
               <p className={`${currentTheme.text} whitespace-pre-wrap text-lg`}>{getDisplayContent(viewingStory)}</p>
             </div>
+            
+            {/* Comments Section */}
+            <Comments itemId={viewingStory.id} itemType="story" />
           </div>
         </div>
       )}
