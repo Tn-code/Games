@@ -2,14 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
     <meta name="theme-color" content="#7c3aed" />
     <meta name="description" content="GamesApp - Educational gaming platform for kids" />
     
-    <!-- FAVICON - The icon in browser tab -->
-    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.svg" />
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GamesApp" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     
     <title>GamesApp - Fun Learning Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,6 +24,43 @@
 </head>
 <body>
     <div id="root"></div>
+    
+    <!-- PWA Install Prompt -->
+    <script>
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Show install button if needed
+        const installBtn = document.getElementById('installBtn');
+        if (installBtn) {
+          installBtn.style.display = 'flex';
+        }
+      });
+
+      window.addEventListener('appinstalled', () => {
+        console.log('📱 App installed successfully!');
+        // Hide install button
+        const installBtn = document.getElementById('installBtn');
+        if (installBtn) {
+          installBtn.style.display = 'none';
+        }
+      });
+
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('✅ Service Worker registered successfully');
+            })
+            .catch(error => {
+              console.log('❌ Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
+    
     <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
