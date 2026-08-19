@@ -8,13 +8,13 @@
     
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="GamesApp" />
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <!-- Favicon using Data URI (Always works) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%237c3aed'/><stop offset='100%25' style='stop-color:%233b82f6'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><text x='50' y='72' font-size='60' text-anchor='middle' fill='white' font-family='Arial'>🎮</text></svg>" />
     
     <title>GamesApp - Fun Learning Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,28 +25,7 @@
 <body>
     <div id="root"></div>
     
-    <!-- PWA Install Prompt -->
     <script>
-      let deferredPrompt;
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        // Show install button if needed
-        const installBtn = document.getElementById('installBtn');
-        if (installBtn) {
-          installBtn.style.display = 'flex';
-        }
-      });
-
-      window.addEventListener('appinstalled', () => {
-        console.log('📱 App installed successfully!');
-        // Hide install button
-        const installBtn = document.getElementById('installBtn');
-        if (installBtn) {
-          installBtn.style.display = 'none';
-        }
-      });
-
       // Register service worker
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
