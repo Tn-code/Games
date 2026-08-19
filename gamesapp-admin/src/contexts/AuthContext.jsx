@@ -11,7 +11,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { db } from '../firebase/config';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 const ADMIN_EMAIL = 'houssinetrabelsi6@gmail.com';
@@ -28,9 +28,11 @@ export function AuthProvider({ children }) {
         setIsAdmin(isAdminUser);
         await saveUserToFirestore(user);
         setUser(user);
+        console.log('✅ User signed in:', user.email);
       } else {
         setUser(null);
         setIsAdmin(false);
+        console.log('ℹ️ No user signed in');
       }
       setLoading(false);
     });
@@ -52,28 +54,45 @@ export function AuthProvider({ children }) {
         isAdmin: user.email === ADMIN_EMAIL,
         providers: user.providerData?.map(p => p.providerId) || ['password'],
         purchases: [],
-        unlockedContent: [] // <-- This is the key field
+        unlockedContent: [],
+        phone: '',
+        bio: '',
+        preferences: {
+          language: 'fr',
+          theme: 'light',
+          notifications: true
+        }
       };
       
       if (!userDoc.exists()) {
         await setDoc(userRef, userData);
-        console.log('✅ New user created with unlockedContent: []');
+        console.log('✅ New user saved to Firestore:', user.email);
       } else {
-        // Update existing user, but ensure unlockedContent exists
         const existingData = userDoc.data();
-        if (!existingData.unlockedContent) {
-          await setDoc(userRef, {
-            ...existingData,
-            unlockedContent: [],
-            lastLogin: new Date().toISOString()
-          }, { merge: true });
-          console.log('✅ Added unlockedContent to existing user');
-        } else {
-          await setDoc(userRef, {
-            ...existingData,
-            lastLogin: new Date().toISOString()
-          }, { merge: true });
+        // Only update if fields don't exist
+        const updateData = {
+          lastLogin: new Date().toISOString(),
+          isAdmin: user.email === ADMIN_EMAIL
+        };
+        
+        // Add missing fields
+        if (!existingData.phone) updateData.phone = '';
+        if (!existingData.bio) updateData.bio = '';
+        if (!existingData.preferences) {
+          updateData.preferences = {
+            language: 'fr',
+            theme: 'light',
+            notifications: true
+          };
         }
+        
+        // Update display name if changed
+        if (existingData.displayName !== user.displayName && user.displayName) {
+          updateData.displayName = user.displayName;
+        }
+        
+        await setDoc(userRef, updateData, { merge: true });
+        console.log('🔄 User updated in Firestore:', user.email);
       }
     } catch (error) {
       console.error('Error saving user:', error);
@@ -82,34 +101,49 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
+      console.log('🔐 Attempting login for:', email);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       await saveUserToFirestore(userCredential.user);
+      console.log('✅ Login successful!');
       return { success: true, user: userCredential.user };
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('❌ Login error:', error.message);
+      let errorMessage = error.message;
+      if (error.message.includes('user-not-found')) {
+        errorMessage = 'User not found. Please create an account first.';
+      } else if (error.message.includes('wrong-password')) {
+        errorMessage = 'Wrong password. Please try again.';
+      }
+      return { success: false, error: errorMessage };
     }
   };
 
   const register = async (email, password, displayName) => {
     try {
+      console.log('📝 Creating account for:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName });
       await sendEmailVerification(userCredential.user);
       await saveUserToFirestore(userCredential.user);
+      console.log('✅ Account created!');
       return { success: true, user: userCredential.user };
     } catch (error) {
+      console.error('❌ Registration error:', error.message);
       return { success: false, error: error.message };
     }
   };
 
   const loginWithGoogle = async () => {
     try {
+      console.log('🔐 Attempting Google login...');
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       await saveUserToFirestore(result.user);
+      console.log('✅ Google login successful!');
       return { success: true, user: result.user };
     } catch (error) {
+      console.error('❌ Google login error:', error.message);
       return { success: false, error: error.message };
     }
   };
@@ -117,8 +151,10 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await signOut(auth);
+      console.log('✅ Logged out');
       return { success: true };
     } catch (error) {
+      console.error('❌ Logout error:', error.message);
       return { success: false, error: error.message };
     }
   };
