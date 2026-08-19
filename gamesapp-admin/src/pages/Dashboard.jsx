@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
+import { useTheme } from '../contexts/ThemeContext';
 import { Sidebar } from '../components/Sidebar';
 import { StatsCard } from '../components/StatsCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -18,6 +19,7 @@ import { Analytics } from './Analytics';
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { logout, user } = useAuth();
+  const { currentTheme } = useTheme();
   const { data: games, loading: gamesLoading } = useFirestore('games');
   const { data: users, loading: usersLoading } = useFirestore('users');
   const { data: stories, loading: storiesLoading } = useFirestore('stories');
@@ -62,11 +64,11 @@ export function Dashboard() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
             <div className="animate-fadeInUp">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard</h2>
-              <p className="text-gray-500 text-sm">Welcome back, {user?.email || 'Admin'}!</p>
+              <p className="text-gray-600 text-sm">Welcome back, {user?.email || 'Admin'}!</p>
             </div>
             <button 
               onClick={handleLogout} 
-              className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-300 hover:scale-105 active:scale-95 text-gray-700 shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 glass-bg border border-gray-200 rounded-xl hover:bg-white/90 transition-all duration-300 hover:scale-105 active:scale-95 text-gray-700 shadow-sm"
             >
               <i className="fas fa-sign-out-alt"></i>
               <span className="font-medium hidden sm:inline">Logout</span>
@@ -80,7 +82,7 @@ export function Dashboard() {
             <StatsCard icon="users" title="Users" value={stats.users} color="green" />
           </div>
 
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100/50 shadow-xl p-4 sm:p-6">
+          <div className="glass-bg rounded-2xl border border-gray-100/50 shadow-xl p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {[
@@ -108,7 +110,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30">
+    <div className="dashboard-bg flex min-h-screen">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       {renderContent()}
     </div>

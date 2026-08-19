@@ -250,7 +250,7 @@ export function UserDashboard() {
   };
 
   return (
-    <div className={`min-h-screen ${currentTheme.background} transition-all duration-500`}>
+    <div className="user-bg min-h-screen transition-all duration-500">
       {/* Navigation */}
       <nav className={`${currentTheme.navbar} sticky top-0 z-10 border-b ${currentTheme.cardBorder} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

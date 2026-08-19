@@ -10,215 +10,72 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: #f0f4f8;
-  overflow-x: hidden;
+  min-height: 100vh;
 }
 
 /* ============================================
-   ANIMATIONS
+   BACKGROUND IMAGE - 123.svg
    ============================================ */
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Main background for the whole app */
+body {
+  background-image: url('/123.svg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
 }
 
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Admin dashboard background */
+.dashboard-bg {
+  background-image: url('/123.svg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  min-height: 100vh !important;
 }
 
-@keyframes fadeInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+/* User dashboard background */
+.user-bg {
+  background-image: url('/123.svg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  min-height: 100vh !important;
 }
 
-@keyframes fadeInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+/* Glass effect for cards */
+.glass-bg {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* Dark mode background */
+[data-theme="dark"] body,
+[data-theme="dark"] .dashboard-bg,
+[data-theme="dark"] .user-bg {
+  background-image: url('/123.svg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
 }
 
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+[data-theme="dark"] .glass-bg {
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
 }
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes confetti {
-  0% {
-    transform: translateY(0) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100px) rotate(720deg);
-    opacity: 0;
-  }
-}
-
-@keyframes gradientMove {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Animation Classes */
-.animate-fadeInUp {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.animate-fadeInDown {
-  animation: fadeInDown 0.6s ease-out forwards;
-}
-
-.animate-fadeInLeft {
-  animation: fadeInLeft 0.6s ease-out forwards;
-}
-
-.animate-fadeInRight {
-  animation: fadeInRight 0.6s ease-out forwards;
-}
-
-.animate-scaleIn {
-  animation: scaleIn 0.5s ease-out forwards;
-}
-
-.animate-pulse {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-glow {
-  animation: glow 2s ease-in-out infinite;
-}
-
-.animate-bounceIn {
-  animation: bounceIn 0.6s ease-out forwards;
-}
-
-.animate-slideIn {
-  animation: slideIn 0.5s ease-out forwards;
-}
-
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradientMove 3s ease infinite;
-}
-
-/* Delay Classes */
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-500 { animation-delay: 0.5s; }
 
 /* ============================================
    COMPONENT STYLES
    ============================================ */
 
 @layer components {
-  /* Sidebar */
   .sidebar-item {
     @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 cursor-pointer relative overflow-hidden;
   }
@@ -248,9 +105,8 @@ body {
     @apply transform translate-x-1;
   }
 
-  /* Cards */
   .stat-card {
-    @apply bg-white p-6 rounded-2xl border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer;
+    @apply glass-bg rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer;
   }
   
   .stat-card:hover .stat-icon {
@@ -261,7 +117,6 @@ body {
     @apply transition-all duration-300;
   }
 
-  /* Buttons */
   .btn-primary {
     @apply px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-purple-600/30 hover:shadow-xl hover:shadow-purple-600/40 hover:scale-105 active:scale-95;
   }
@@ -270,12 +125,10 @@ body {
     @apply px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold transition-all duration-300 hover:bg-gray-200 hover:scale-105 active:scale-95;
   }
 
-  /* Input Fields */
   .input-field {
     @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all duration-300 hover:border-purple-300;
   }
 
-  /* Badge */
   .badge-premium {
     @apply px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 rounded-full text-xs font-bold shadow-lg transition-all duration-300 hover:scale-105;
   }
@@ -292,47 +145,97 @@ body {
     @apply px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full text-xs font-bold shadow-lg transition-all duration-300 hover:scale-105;
   }
 
-  /* Glass Effect */
   .glass {
     @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-xl;
   }
 
-  /* Gradient Text */
   .gradient-text {
     @apply text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600;
   }
 
-  /* Hover Effects */
   .hover-lift {
     @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl;
   }
 
-  .hover-glow {
-    @apply transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/30;
-  }
-
-  /* Shimmer Effect */
-  .shimmer {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% auto;
-    animation: shimmer 2s linear infinite;
-  }
-
-  /* Floating Animation */
   .floating {
     animation: float 3s ease-in-out infinite;
   }
-
-  /* Card Grid */
-  .card-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
-  }
-
-  /* Responsive Container */
-  .container-custom {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
 }
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fadeInDown {
+  animation: fadeInDown 0.6s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+.animate-bounceIn {
+  animation: bounceIn 0.6s ease-out forwards;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
 
 /* ============================================
    SCROLLBAR
@@ -354,60 +257,8 @@ body {
   @apply bg-purple-600;
 }
 
-/* ============================================
-   SELECTION
-   ============================================ */
 ::selection {
   @apply bg-purple-500 text-white;
-}
-
-/* ============================================
-   LOADING SPINNER
-   ============================================ */
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e5e7eb;
-  border-top: 4px solid #7c3aed;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* ============================================
-   CONFETTI
-   ============================================ */
-.confetti-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 9999;
-  overflow: hidden;
-}
-
-.confetti {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  animation: confettiFall linear infinite;
-}
-
-@keyframes confettiFall {
-  0% {
-    transform: translateY(-10vh) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(110vh) rotate(720deg);
-    opacity: 0;
-  }
 }
 
 /* ============================================
@@ -425,123 +276,11 @@ body {
   .btn-primary, .btn-secondary {
     @apply px-4 py-2 text-sm;
   }
-  
-  .card-grid {
-    @apply grid-cols-1;
-  }
 }
 
 /* ============================================
-   SIDEBAR ANIMATIONS
+   DARK MODE OVERRIDES
    ============================================ */
-
-/* Sidebar item hover glow */
-.sidebar-item {
-  @apply relative overflow-hidden cursor-pointer rounded-xl transition-all duration-300;
-}
-
-.sidebar-item::after {
-  content: '';
-  @apply absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 transition-opacity duration-300;
-}
-
-.sidebar-item:hover::after {
-  @apply opacity-100;
-}
-
-.sidebar-item.active {
-  @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-600/30;
-}
-
-.sidebar-item.active .icon-wrapper {
-  @apply bg-white/20 text-white;
-}
-
-.sidebar-item .icon-wrapper {
-  @apply transition-all duration-300;
-}
-
-.sidebar-item:hover .icon-wrapper {
-  @apply scale-110 rotate-3;
-}
-
-/* Sidebar toggle button */
-.sidebar-toggle {
-  @apply fixed top-4 left-4 z-50 bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95;
-}
-
-/* Sidebar overlay */
-.sidebar-overlay {
-  @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300;
-}
-
-/* Sidebar transition */
-.sidebar-transition {
-  @apply transition-all duration-300 ease-in-out;
-}
-
-/* Sidebar open/close */
-.sidebar-open {
-  @apply left-0;
-}
-
-.sidebar-closed {
-  @apply -left-64;
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-  .sidebar-item {
-    @apply px-2 py-1.5;
-  }
-  
-  .sidebar-item .icon-wrapper {
-    @apply w-7 h-7 text-sm;
-  }
-  
-  .sidebar-item span {
-    @apply text-sm;
-  }
-}
-
-/* Toast Animation */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slideIn {
-  animation: slideIn 0.5s ease-out forwards;
-}
-
-/* ============================================
-   THEME VARIABLES
-   ============================================ */
-:root {
-  --bg-primary: #f0f4f8;
-  --bg-secondary: #ffffff;
-  --text-primary: #1a202c;
-  --text-secondary: #4a5568;
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --border-color: rgba(255, 255, 255, 0.5);
-}
-
-[data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --card-bg: rgba(30, 41, 59, 0.9);
-  --border-color: rgba(71, 85, 105, 0.5);
-}
-
-/* Dark mode specific styles */
 [data-theme="dark"] .glass {
   @apply bg-gray-800/80 backdrop-blur-lg border border-gray-700/50;
 }
@@ -554,54 +293,34 @@ body {
   @apply border-purple-500 ring-purple-500/20;
 }
 
-[data-theme="dark"] .stat-card {
-  @apply bg-gray-800/90 border-gray-700;
+/* ============================================
+   FALLBACK BACKGROUND - If SVG doesn't load
+   ============================================ */
+
+/* This will show if SVG fails to load */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  min-height: 100vh !important;
 }
 
-[data-theme="dark"] .stat-card .number {
-  @apply text-white;
+.dashboard-bg, .user-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  min-height: 100vh !important;
 }
 
-[data-theme="dark"] .stat-card .title {
-  @apply text-gray-400;
+/* But try to load SVG first */
+body {
+  background-image: url('/123.svg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
 }
 
-[data-theme="dark"] .badge-premium {
-  @apply bg-gradient-to-r from-yellow-500 to-yellow-600 text-white;
-}
-
-[data-theme="dark"] .badge-free {
-  @apply bg-gradient-to-r from-green-500 to-green-600 text-white;
-}
-
-[data-theme="dark"] .badge-locked {
-  @apply bg-gradient-to-r from-red-600 to-red-700 text-white;
-}
-
-[data-theme="dark"] .badge-unlocked {
-  @apply bg-gradient-to-r from-green-600 to-emerald-600 text-white;
-}
-
-/* Responsive design */
-@media (max-width: 640px) {
-  .container-custom {
-    @apply px-3;
-  }
-  
-  .card-grid {
-    @apply grid-cols-1;
-  }
-  
-  .btn-primary, .btn-secondary {
-    @apply px-3 py-2 text-sm;
-  }
-  
-  .input-field {
-    @apply text-sm;
-  }
-}
-
-/* Smooth transitions for theme change */
-* {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+.dashboard-bg, .user-bg {
+  background-image: url('/123.svg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
 }
