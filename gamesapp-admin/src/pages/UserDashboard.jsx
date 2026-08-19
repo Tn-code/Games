@@ -14,6 +14,8 @@ import { AdvancedSearch } from '../components/AdvancedSearch';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { UserProfile } from '../components/UserProfile';
 import { Comments } from '../components/Comments';
+import { InstallPrompt } from '../components/InstallPrompt';
+import { NotificationBell } from '../components/NotificationBell';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -296,6 +298,7 @@ export function UserDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <ThemeToggle />
+              <NotificationBell />
               <button
                 onClick={toggleLanguage}
                 className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
@@ -569,6 +572,9 @@ export function UserDashboard() {
           <QuizPlay quiz={playingQuiz} onClose={() => setPlayingQuiz(null)} language={language} />
         </div>
       )}
+
+      {/* Install Prompt - Mobile App Install Banner */}
+      <InstallPrompt />
     </div>
   );
 }
