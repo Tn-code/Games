@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
 export function Toast({ message, type, onClose, duration = 3000 }) {
+  const [visible, setVisible] = useState(true);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      onClose();
+      setVisible(false);
+      setTimeout(onClose, 300);
     }, duration);
     return () => clearTimeout(timer);
   }, [duration, onClose]);
@@ -22,11 +25,13 @@ export function Toast({ message, type, onClose, duration = 3000 }) {
     warning: 'fa-exclamation-triangle'
   };
 
+  if (!visible) return null;
+
   return (
-    <div className={`fixed top-4 right-4 z-[99999] animate-slideIn flex items-center gap-3 px-6 py-4 rounded-xl text-white shadow-2xl ${styles[type] || styles.info}`}>
+    <div className={`fixed top-4 right-4 z-[99999] flex items-center gap-3 px-6 py-4 rounded-xl text-white shadow-2xl animate-slideIn ${styles[type] || styles.info}`}>
       <i className={`fas ${icons[type] || icons.info} text-xl`}></i>
       <span className="font-medium">{message}</span>
-      <button onClick={onClose} className="ml-4 text-white/80 hover:text-white transition-all duration-300 hover:rotate-90">
+      <button onClick={() => { setVisible(false); setTimeout(onClose, 300); }} className="ml-4 text-white/80 hover:text-white transition-all duration-300 hover:rotate-90">
         <i className="fas fa-times"></i>
       </button>
     </div>
