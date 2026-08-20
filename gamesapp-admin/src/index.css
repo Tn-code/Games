@@ -413,3 +413,224 @@ body {
 .animate-slideIn {
   animation: slideIn 0.5s ease-out forwards;
 }
+
+/* ============================================
+   MOBILE-FIRST RESPONSIVE DESIGN
+   ============================================ */
+
+/* Global responsive adjustments */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile First - Base styles for all devices */
+html {
+  font-size: 16px;
+}
+
+body {
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar for mobile */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
+
+/* Extra Small Devices (Phones, 320px and up) */
+@media (max-width: 480px) {
+  .container-custom {
+    @apply px-3;
+  }
+  
+  .card-grid {
+    @apply grid-cols-1 gap-4;
+  }
+  
+  .btn-primary, .btn-secondary {
+    @apply px-3 py-2 text-xs;
+  }
+  
+  .input-field {
+    @apply text-sm px-3 py-2;
+  }
+  
+  .stat-card {
+    @apply p-3;
+  }
+  
+  .stat-card .number {
+    @apply text-xl;
+  }
+  
+  .stat-card .title {
+    @apply text-xs;
+  }
+  
+  h1 {
+    @apply text-xl;
+  }
+  
+  h2 {
+    @apply text-lg;
+  }
+  
+  h3 {
+    @apply text-base;
+  }
+  
+  .sidebar-item {
+    @apply px-2 py-1.5 text-xs;
+  }
+  
+  .sidebar-item .icon-wrapper {
+    @apply w-6 h-6 text-xs;
+  }
+  
+  .glass {
+    @apply p-3;
+  }
+  
+  .modal-content {
+    @apply p-3 m-2;
+  }
+  
+  .badge-premium, .badge-free, .badge-locked, .badge-unlocked {
+    @apply text-[10px] px-2 py-0.5;
+  }
+  
+  /* Login page mobile */
+  .login-container {
+    @apply p-3;
+  }
+  
+  .login-container .logo {
+    @apply w-16 h-16 text-3xl;
+  }
+  
+  .login-container h1 {
+    @apply text-2xl;
+  }
+  
+  .login-container .swipe-bar {
+    @apply h-12;
+  }
+  
+  .login-container .swipe-knob {
+    @apply w-10 h-10 text-sm;
+  }
+}
+
+/* Small Devices (Phones, 481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .card-grid {
+    @apply grid-cols-2 gap-4;
+  }
+  
+  .container-custom {
+    @apply px-4;
+  }
+  
+  h1 {
+    @apply text-2xl;
+  }
+  
+  h2 {
+    @apply text-xl;
+  }
+  
+  .stat-card {
+    @apply p-4;
+  }
+}
+
+/* Tablets (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .card-grid {
+    @apply grid-cols-2 gap-5;
+  }
+  
+  .container-custom {
+    @apply px-6;
+  }
+}
+
+/* Desktop (1025px and up) */
+@media (min-width: 1025px) {
+  .card-grid {
+    @apply grid-cols-3 gap-6;
+  }
+  
+  .container-custom {
+    @apply px-8;
+  }
+}
+
+/* ============================================
+   TOUCH-FRIENDLY
+   ============================================ */
+
+/* Larger touch targets for mobile */
+@media (max-width: 768px) {
+  button, 
+  .clickable,
+  .sidebar-item,
+  .stat-card {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  button:active,
+  .clickable:active {
+    transform: scale(0.96);
+  }
+  
+  input, select, textarea {
+    @apply text-base; /* Prevents zoom on iOS */
+  }
+}
+
+/* ============================================
+   SAFE AREA (Notch phones)
+   ============================================ */
+
+@supports (padding: max(0px)) {
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+  
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+}
+
+/* ============================================
+   DARK MODE MOBILE
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="light"] {
+    --bg-primary: #f0f4f8;
+    --text-primary: #1a202c;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+  }
+}
