@@ -17,13 +17,14 @@ export function Login() {
   const swipeRef = useRef(null);
 
   const handleTouchStart = (e) => {
+    if (isOpen) return;
     const touch = e.touches[0];
     setStartX(touch.clientX);
     setIsDragging(true);
   };
 
   const handleTouchMove = (e) => {
-    if (!isDragging) return;
+    if (!isDragging || isOpen) return;
     const touch = e.touches[0];
     const deltaX = touch.clientX - startX;
     const progress = Math.min(Math.max(deltaX / 250, 0), 1);
@@ -32,22 +33,23 @@ export function Login() {
 
   const handleTouchEnd = () => {
     setIsDragging(false);
-    if (swipeProgress > 0.7) {
+    if (swipeProgress > 0.85 && !isOpen) {
       setIsOpen(true);
       setSwipeProgress(1);
-      showToast('🔓 Welcome!', 'success');
-    } else {
+      showToast('🔓 Unlocked!', 'success');
+    } else if (!isOpen) {
       setSwipeProgress(0);
     }
   };
 
   const handleMouseDown = (e) => {
+    if (isOpen) return;
     setStartX(e.clientX);
     setIsDragging(true);
   };
 
   const handleMouseMove = (e) => {
-    if (!isDragging) return;
+    if (!isDragging || isOpen) return;
     const deltaX = e.clientX - startX;
     const progress = Math.min(Math.max(deltaX / 250, 0), 1);
     setSwipeProgress(progress);
@@ -55,13 +57,19 @@ export function Login() {
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    if (swipeProgress > 0.7) {
+    if (swipeProgress > 0.85 && !isOpen) {
       setIsOpen(true);
       setSwipeProgress(1);
-      showToast('🔓 Welcome!', 'success');
-    } else {
+      showToast('🔓 Unlocked!', 'success');
+    } else if (!isOpen) {
       setSwipeProgress(0);
     }
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setSwipeProgress(0);
+    showToast('🔒 Locked', 'info');
   };
 
   // Auto-open animation on load
@@ -74,7 +82,7 @@ export function Login() {
           clearInterval(interval);
           setIsOpen(true);
           setSwipeProgress(1);
-          showToast('🔓 Welcome!', 'success');
+          showToast('🔓 Unlocked!', 'success');
         } else {
           setSwipeProgress(progress);
         }
@@ -164,184 +172,183 @@ export function Login() {
           </p>
         </div>
 
-        {/* Swipe to Open */}
-        <div className="mb-8">
-          <div 
-            className="relative h-16 bg-white/10 backdrop-blur rounded-2xl border border-white/20 overflow-hidden cursor-pointer"
-            ref={swipeRef}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
-            {/* Progress Bar */}
+        {/* Swipe to Open - Only visible when not open */}
+        {!isOpen && (
+          <div className="mb-8">
             <div 
-              className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl transition-all duration-150"
-              style={{ width: `${openPercent}%` }}
-            />
-            
-            {/* Glow Effect */}
-            {openPercent > 0 && openPercent < 100 && (
+              className="relative h-16 bg-white/10 backdrop-blur rounded-2xl border border-white/20 overflow-hidden cursor-pointer"
+              ref={swipeRef}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              {/* Progress Bar */}
               <div 
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-2xl"
-                style={{ 
-                  left: `${openPercent - 10}%`,
-                  width: '20%',
-                  filter: 'blur(10px)'
-                }}
+                className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl transition-all duration-150"
+                style={{ width: `${openPercent}%` }}
               />
-            )}
-            
-            {/* Text */}
-            <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-medium z-10">
-              {isOpen ? (
-                <span className="flex items-center gap-2 text-green-400">
-                  <i className="fas fa-check-circle"></i>
-                  Unlocked!
-                </span>
-              ) : (
+              
+              {/* Glow Effect */}
+              {openPercent > 0 && openPercent < 100 && (
+                <div 
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-2xl"
+                  style={{ 
+                    left: `${openPercent - 10}%`,
+                    width: '20%',
+                    filter: 'blur(10px)'
+                  }}
+                />
+              )}
+              
+              {/* Text */}
+              <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-medium z-10">
                 <span className="flex items-center gap-3">
                   <i className="fas fa-arrow-right animate-pulse"></i>
                   <span className="text-white/80">Swipe to Unlock</span>
                   <i className="fas fa-arrow-right animate-pulse"></i>
                 </span>
-              )}
+              </div>
+              
+              {/* Swipe Knob */}
+              <div 
+                className="absolute top-1.5 w-12 h-12 bg-white rounded-2xl shadow-2xl transition-all duration-150 flex items-center justify-center z-20"
+                style={{ 
+                  left: `${Math.min(openPercent, 92)}%`,
+                  transform: 'translateX(-50%)'
+                }}
+              >
+                <span className="text-xl">🔒</span>
+              </div>
             </div>
             
-            {/* Swipe Knob */}
-            <div 
-              className="absolute top-1.5 w-12 h-12 bg-white rounded-2xl shadow-2xl transition-all duration-150 flex items-center justify-center z-20"
-              style={{ 
-                left: `${Math.min(openPercent, 92)}%`,
-                transform: 'translateX(-50%)'
-              }}
-            >
-              <span className="text-xl">
-                {isOpen ? '🔓' : '🔒'}
-              </span>
-            </div>
-          </div>
-          
-          {/* Swipe Hint */}
-          {!isOpen && swipeProgress === 0 && (
             <p className="text-center text-white/30 text-xs mt-3">
               Swipe right to unlock login
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Login Form */}
-        <div className={`transition-all duration-700 transform ${
-          isOpen 
-            ? 'opacity-100 translate-y-0 scale-100' 
-            : 'opacity-0 translate-y-10 scale-95 pointer-events-none'
-        }`}>
-          {isOpen && (
-            <div className="bg-white/5 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 border border-white/20 animate-bounceIn">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-white">
-                  {isRegistering ? 'Create Account' : 'Welcome Back'}
-                </h2>
-                <p className="text-white/60 text-sm mt-1">
-                  {isRegistering ? 'Join the Python adventure!' : 'Sign in to continue'}
-                </p>
+        {/* Login Form - Only visible when swiped open */}
+        {isOpen && (
+          <div className="bg-white/5 backdrop-blur-2xl rounded-3xl shadow-2xl p-6 border border-white/20 animate-bounceIn">
+            
+            {/* Close Button */}
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={handleClose}
+                className="text-white/40 hover:text-white/80 transition-all hover:rotate-90 duration-300 text-xl"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="text-center mb-6">
+              <div className="flex justify-center mb-3">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <i className="fab fa-python text-3xl text-white"></i>
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-white">
+                {isRegistering ? 'Create Account' : 'Welcome Back'}
+              </h2>
+              <p className="text-white/60 text-sm mt-1">
+                {isRegistering ? 'Join the Python adventure!' : 'Sign in to continue'}
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              {isRegistering && (
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-white/80 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 outline-none transition-all text-sm"
+                    placeholder="John Doe"
+                    required={isRegistering}
+                  />
+                </div>
+              )}
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-white/80 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 outline-none transition-all text-sm"
+                  placeholder="admin@example.com"
+                  required
+                />
               </div>
 
-              <form onSubmit={handleSubmit}>
-                {isRegistering && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-white/80 mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 outline-none transition-all"
-                      placeholder="John Doe"
-                      required={isRegistering}
-                    />
-                  </div>
-                )}
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-white/80 mb-2">Email Address</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 outline-none transition-all"
-                    placeholder="admin@example.com"
-                    required
-                  />
-                </div>
-
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-white/80 mb-2">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 outline-none transition-all"
-                    placeholder="••••••••"
-                    required
-                    minLength="6"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      <i className="fas fa-sign-in-alt"></i>
-                      {isRegistering ? 'Create Account' : 'Sign In'}
-                    </>
-                  )}
-                </button>
-              </form>
-
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20"></div></div>
-                <div className="relative flex justify-center text-sm"><span className="px-4 bg-transparent text-white/40">Or continue with</span></div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-white/80 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 outline-none transition-all text-sm"
+                  placeholder="••••••••"
+                  required
+                  minLength="6"
+                />
               </div>
 
               <button
-                onClick={handleGoogleLogin}
+                type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all text-white font-medium"
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2.5 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 text-sm"
               >
-                <i className="fab fa-google text-red-400 text-xl"></i>
-                Google
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <i className="fas fa-sign-in-alt"></i>
+                    {isRegistering ? 'Create Account' : 'Sign In'}
+                  </>
+                )}
               </button>
+            </form>
 
-              <div className="mt-6 text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsRegistering(!isRegistering)}
-                  className="text-sm text-white/60 hover:text-white transition-all"
-                >
-                  {isRegistering ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-                </button>
-              </div>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20"></div></div>
+              <div className="relative flex justify-center text-sm"><span className="px-4 bg-transparent text-white/40 text-xs">Or continue with</span></div>
+            </div>
 
-              {/* Python Badge */}
-              <div className="mt-6 pt-4 border-t border-white/10 flex justify-center">
-                <div className="flex items-center gap-3 text-white/30 text-xs">
-                  <i className="fab fa-python text-blue-400"></i>
-                  <span>Python 3.11</span>
-                  <span className="w-1 h-1 bg-white/20 rounded-full"></span>
-                  <span>🐍 GamesApp</span>
-                </div>
+            <button
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all text-white font-medium text-sm"
+            >
+              <i className="fab fa-google text-red-400 text-lg"></i>
+              Google
+            </button>
+
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setIsRegistering(!isRegistering)}
+                className="text-xs text-white/60 hover:text-white transition-all"
+              >
+                {isRegistering ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              </button>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-white/10 flex justify-center">
+              <div className="flex items-center gap-2 text-white/30 text-[10px]">
+                <i className="fab fa-python text-blue-400"></i>
+                <span>Python 3.11</span>
+                <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+                <span>🐍 GamesApp</span>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -351,14 +358,14 @@ export function Login() {
         }
         
         @keyframes bounceIn {
-          0% { transform: scale(0.9); opacity: 0; }
+          0% { transform: scale(0.95); opacity: 0; }
           50% { transform: scale(1.02); }
           70% { transform: scale(0.98); }
           100% { transform: scale(1); opacity: 1; }
         }
         
         .animate-bounceIn {
-          animation: bounceIn 0.5s ease-out forwards;
+          animation: bounceIn 0.4s ease-out forwards;
         }
       `}</style>
     </div>
