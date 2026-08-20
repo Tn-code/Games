@@ -72,7 +72,6 @@ export function Login() {
     showToast('🔒 Locked', 'info');
   };
 
-  // Auto-open animation on load
   useEffect(() => {
     const timer = setTimeout(() => {
       let progress = 0;
@@ -172,7 +171,7 @@ export function Login() {
           </p>
         </div>
 
-        {/* Swipe to Open - Only visible when not open */}
+        {/* Swipe to Open */}
         {!isOpen && (
           <div className="mb-8">
             <div 
@@ -231,7 +230,7 @@ export function Login() {
           </div>
         )}
 
-        {/* Login Form - Only visible when swiped open */}
+        {/* Login Form */}
         {isOpen && (
           <div className="bg-white/5 backdrop-blur-2xl rounded-3xl shadow-2xl p-6 border border-white/20 animate-bounceIn">
             
